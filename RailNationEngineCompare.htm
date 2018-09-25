@@ -1,0 +1,2005 @@
+
+<!-- Author: GizmoXomziG & Hear Me Roar, 25.9.2018 -->
+<!-- Bitcoin donations address: 1GizmoX71AoJJGwwxkgMc3tY8z93aeCetc -->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Rail Nation engine compare</title>
+<style>
+    .boxyCheckbox label {
+        display: inline-block;
+        padding: 0px 10px;
+        margin: 2px 0px;
+        text-align: center;
+        color: grey;
+        background: white;
+        border: 1px solid #aaaaaa;
+        border-radius: 10px;
+    }
+    .boxyCheckbox input[type=checkbox] {
+        position: absolute;
+        visibility: hidden;
+        display: none;
+    }
+
+    .boxyCheckbox input[type=checkbox]:checked + label{
+        border: 1px solid #000000;
+        border-radius: 10px;
+        color: black;
+    }
+
+    .boxyRadio label {
+        display: inline-block;
+        padding: 0px 10px;
+        width: 30px;
+        text-align: center;
+        color: grey;
+        background: white;
+        border: 1px solid #aaaaaa;
+        border-radius: 10px;
+    }
+    .boxyRadio input[type=radio] {
+        position: absolute;
+        visibility: hidden;
+        display: none;
+    }
+    .boxyRadio input[type=radio]:checked + label {
+        border: 1px solid #000000;
+        border-radius: 10px;
+    }
+    
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+    .tab label {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 17px;
+    }
+    .tab label:hover {
+        background-color: #ddd;
+    }
+    .tab label.active {
+        background-color: #ccc;
+    }
+    .tab input[type=radio] {
+        position: absolute;
+        visibility: hidden;
+        display: none;
+    }
+    
+	.hidden { display: none; }
+	.unhidden { display: block; }
+
+	.noselect {
+	  -webkit-touch-callout: none; /* iOS Safari */
+		-webkit-user-select: none; /* Safari */
+		 -khtml-user-select: none; /* Konqueror HTML */
+		   -moz-user-select: none; /* Firefox */
+			-ms-user-select: none; /* Internet Explorer/Edge */
+				user-select: none; /* Non-prefixed version, currently
+									  supported by Chrome and Opera */
+	}	
+	
+	.chart_text {
+		width: 100%;
+		height: 100%;
+		display: table;
+		text-align: center;
+		font-size:24px;
+	}
+	.chart_text > .child {
+		display: table-cell;
+		vertical-align: middle;
+	}	
+    table tr:nth-child(even) {background: GhostWhite}
+	
+</style>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+
+var bGoogleChartsLoaded=false;
+function googleChartsLoaded() {
+	bGoogleChartsLoaded=true;
+	runCompare();
+}
+google.charts.load('current', {packages: ['corechart', 'line', 'bar']});
+google.charts.setOnLoadCallback(googleChartsLoaded);
+	
+var Cargo		= false;
+var	Lng_Index 	= 0;
+
+const C_ENGINE_ERA 					= 0;
+const C_ENGINE_EN_NAME 				= 1;
+const C_ENGINE_DE_NAME 				= 2;
+const C_ENGINE_SLOTS	 			= 3;
+const C_ENGINE_SLOTS_VIEW	 		= 4;
+const C_ENGINE_TRACTIVE_FORCE 		= 5;
+const C_ENGINE_ACCELERATION 		= 6;
+const C_ENGINE_SPEED		 		= 7;
+const C_ENGINE_RELIABILITY	 		= 8;
+const C_ENGINE_TYPE 				= 9;
+const C_ENGINE_MORE_INFO			= 10;
+
+const T_STANDARD					= 1;
+const T_BONUS						= 2;
+const T_CAREER						= 4;
+const T_CARGO						= 8;
+const T_PAX							= 16
+const T_OLD							= 32;
+
+const I_NONE						= 0;
+const I_ALL_ROUNDER					= 1;
+const I_SHORT_HAUL					= 2;
+const I_LONG_HAUL					= 4;
+const I_SPRINTER					= 8;
+const I_MARATONER					= 16;
+const I_TRACTION_GIANT				= 32;
+const I_BASIC_TYPES					= (I_ALL_ROUNDER | I_SHORT_HAUL | I_LONG_HAUL | I_SPRINTER | I_MARATONER | I_TRACTION_GIANT);
+
+function EngineInfoStr(n){
+	if (Lng_Index == 1)
+	switch(n & I_BASIC_TYPES){
+	case I_ALL_ROUNDER: 			return "Allrounder";
+	case I_SHORT_HAUL: 				return "Kurzstreckenlok";
+	case I_LONG_HAUL: 				return "Longstreckenlok";
+	case I_SPRINTER: 				return "Sprinter";
+	case I_MARATONER:	 			return "Dauerbrenner";
+	case I_TRACTION_GIANT:		 	return "Zugkraftmonster";
+	} else
+	switch(n & I_BASIC_TYPES){
+	case I_ALL_ROUNDER: 			return "All-rounder";
+	case I_SHORT_HAUL: 				return "Short-haul engine";
+	case I_LONG_HAUL: 				return "Long-haul engine";
+	case I_SPRINTER: 				return "Sprinter";
+	case I_MARATONER:	 			return "Marathoner";
+	case I_TRACTION_GIANT:		 	return "Traction giant";
+	};	
+	return "";
+}
+
+C_STR_TRACTIVE 						= "tractive";
+C_STR_ACCELERATION					= "acceleration";
+C_STR_SPEED 						= "speed";
+C_STR_RELIABILITY 					= "reliability";
+
+function EngineColumnStr(n){
+	switch(n){
+	case C_ENGINE_ERA: 				return "era";
+	case C_ENGINE_EN_NAME: 			return "name";
+	case C_ENGINE_DE_NAME: 			return "name";
+	case C_ENGINE_TRACTIVE_FORCE: 	return C_STR_TRACTIVE;
+	case C_ENGINE_ACCELERATION:	 	return C_STR_ACCELERATION;
+	case C_ENGINE_SPEED:		 	return C_STR_SPEED;
+	case C_ENGINE_RELIABILITY:	 	return C_STR_RELIABILITY;
+	case C_ENGINE_SLOTS:	 		return "name";
+	case C_ENGINE_SLOTS_VIEW:	 	return "name";
+	case C_ENGINE_TYPE: 			return "name";
+	case C_ENGINE_MORE_INFO:		return "name";
+	};
+}
+
+
+const aaEngines=[
+
+//era,name,Cargo/Pax,Bonus/Standard,TractiveForce(stock,upgrade1,...),Acceleration(),Speed()
+	[1,'Career Engine','Karrierelok',0,0,
+	[1,2,3,4,5,6,7],
+	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+	[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140,145,150],
+	[20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
+	T_CAREER | T_CARGO,I_NONE,''],
+	[2,'Career Engine','Karrierelok',0,0,
+	[1,2,3,4,5,6,7,8,9,10,11],
+	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+	[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140,145,150,155,160,165,170,175],
+	[20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
+	T_CAREER | T_CARGO,I_NONE,''],
+	[3,'Career Engine','Karrierelok',0,0,
+	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+	[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140,145,150,155,160,165,170,175,180,185,190,195,200],
+	[20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
+	T_CAREER | T_CARGO,I_NONE,''],
+	[0,'Career Engine','Karrierelok',0,0,
+	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+	[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+	[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140,145,150,155,160,165,170,175,180,185,190,195,200,205,210,215,220,225,230,235,240,245,250],
+	[20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
+	T_CAREER | T_CARGO,I_NONE,''],
+
+
+	//AFTER UPDATE (THANK YOU FOR THE INFO @ Hear Me Roar)
+	[1,'Swallow'	,'Schwalbe'		,1,1,	[2,3]			,[14,18]	,[50,60]		,[50,70]	,T_STANDARD | T_CARGO,I_SHORT_HAUL,''],
+	[1,'Raven'		,'Rabe'			,1,1,	[3,4]			,[5,7]		,[60,70]		,[40,60]	,T_STANDARD | T_CARGO,I_ALL_ROUNDER,''],
+	[1,'Rhinoceros'	,'Nashorn'		,1,1,	[2,3]			,[10,14]	,[110,130]		,[30,50]	,T_STANDARD | T_CARGO,I_SPRINTER,''],
+	[1,'Donkey'		,'Esel'			,1,1,	[4,5,6]			,[2,3]		,[50,60]		,[20,40]	,T_STANDARD | T_CARGO,I_TRACTION_GIANT,''],
+	[1,'Falcon'		,'Falke'		,1,1,	[3,4]			,[1,2,3]	,[140,160]		,[50,70]	,T_STANDARD | T_CARGO,I_LONG_HAUL,''],
+	[1,'Mole'		,'Maulwurf'		,1,1,	[4,5]			,[3,5]		,[70,85]		,[70,80,90]	,T_STANDARD | T_CARGO,I_MARATONER,''],
+	[1,'Whale'		,'Wal'			,1,1,	[50,55]			,[1,2]		,[80,95]		,[70,85]	,T_STANDARD | T_PAX,I_NONE,''],
+	[1,'Greyhound'	,'Windhund'		,1,1,	[40,45]			,[15,20]	,[160,180,190]	,[40,60]	,T_STANDARD | T_PAX,I_NONE,''],
+	[1,'Red Kite'	,'Roter Milan'	,1,1,	[5,6]			,[6,10]		,[95,110]		,[95,100]	,T_BONUS | T_CARGO,I_NONE,''],
+	[1,'Dragonfly'	,'Libelle'		,1,1,	[55,60]			,[10,15]	,[150,170]		,[95,100]	,T_BONUS | T_PAX,I_NONE,''],
+
+	[2,'Bat'		,'Fledermaus'	,1,1,	[4,5]			,[1,2]		,[150,165,175]	,[50,60]	,T_STANDARD | T_CARGO,I_LONG_HAUL,''],
+	[2,'Panther'	,'Panther'		,1,1,	[4,5]			,[3,5]		,[90,105]		,[70,90]	,T_STANDARD | T_CARGO,I_MARATONER,''],
+	[2,'Black Bear'	,'Schwarzbär'	,1,1,	[6]				,[15,19]	,[70,80,90]		,[40,55,65]	,T_STANDARD | T_CARGO,I_SHORT_HAUL,''],
+	[2,'Lynx'		,'Luchs'		,1,1,	[3,4,5]			,[10,15]	,[130,135,150]	,[35,50]	,T_STANDARD | T_CARGO,I_SPRINTER,''],
+	[2,'Boar'		,'Eber'			,1,1,	[5,6]			,[6,9]		,[95,115]		,[50,60,70]	,T_STANDARD | T_CARGO,I_ALL_ROUNDER,''],
+	[2,'Elephant'	,'Elefant'		,1,1,	[9,10,11]		,[1,2]		,[50,60,65]		,[30,40]	,T_STANDARD | T_CARGO,I_TRACTION_GIANT,''],
+	[2,'Giraffe'	,'Giraffe'		,1,1,	[75,85,90]		,[3,4,5]	,[80,95,105]	,[30,40,50]	,T_STANDARD | T_PAX,I_NONE,''],
+	[2,'Cheetah'	,'Gepard'		,1,1,	[45,55]			,[9,12,14]	,[190,210,225]	,[70,80,90]	,T_STANDARD | T_PAX,I_NONE,''],
+	[2,'Bull'		,'Bulle'		,1,1,	[6,7]			,[5,9]		,[120,140]		,[90,95]	,T_BONUS | T_CARGO,I_NONE,''],
+	[2,'Kangaroo'	,'Känguru'		,1,1,	[100,110]		,[10,15]	,[115,130]		,[90,95]	,T_BONUS | T_PAX,I_NONE,''],
+
+	[3,'Odin'		,'Odin'			,1,1,	[4,5,6]			,[5,8,10]	,[120,140]		,[60,75]	,T_STANDARD | T_CARGO,I_ALL_ROUNDER,''],
+	[3,'Dionysos'	,'Dionysos'		,1,1,	[4,5]			,[12,16]	,[170,190,200]	,[50,60,70]	,T_STANDARD | T_CARGO,I_SPRINTER,''],
+	[3,'Herakles'	,'Herakles'		,1,1,	[9,10,11]		,[1]		,[75,85,95]		,[30,40,50]	,T_STANDARD | T_CARGO,I_TRACTION_GIANT,''],
+	[3,'Prometheus'	,'Prometheus'	,1,1,	[7,8]			,[16,20]	,[80,90,105]	,[45,55,65]	,T_STANDARD | T_CARGO,I_SHORT_HAUL,''],
+	[3,'Osiris'		,'Osiris'		,1,1,	[6,7]			,[4,6]		,[100,115,130]	,[80,95]	,T_STANDARD | T_CARGO,I_MARATONER,''],
+	[3,'Morpheus'	,'Morpheus'		,2,1,	[12,14,16]		,[1,2,3]	,[200,220,250]	,[50,65,75]	,T_STANDARD | T_CARGO,I_LONG_HAUL,''],
+	[3,'Morpheus'	,'Morpheus'		,2,2,	[12,14,16]		,[1,2,3]	,[200,220,250]	,[50,65,75]	,T_STANDARD | T_CARGO,I_LONG_HAUL,''],
+	[3,'Ajax'		,'Ajax'			,1,1,	[75,90]			,[10,12,14]	,[150,160,175]	,[60,70,80]	,T_STANDARD | T_PAX,I_NONE,''],
+	[3,'Artemis'	,'Artemis'		,2,1,	[280,310,360]	,[1,2,3]	,[70,80]		,[20,40]	,T_STANDARD | T_PAX,I_NONE,''],
+	[3,'Artemis'	,'Artemis'		,2,2,	[280,310,360]	,[1,2,3]	,[70,80]		,[20,40]	,T_STANDARD | T_PAX,I_NONE,''],
+	[3,'Isis'		,'Isis'			,1,1,	[8,9]			,[6,11]		,[130,150]		,[85,90]	,T_BONUS | T_CARGO,I_NONE,''],
+	[3,'Electra'	,'Elektra'		,1,1,	[110,125]		,[20]		,[165,190]		,[85,90,95]	,T_BONUS | T_PAX,I_NONE,''],
+
+	[4,'Apollo'		,'Apollon'		,1,1,	[11,12,13]		,[1,2]		,[70,75,85]		,[30,50]	,T_STANDARD | T_CARGO,I_TRACTION_GIANT,''],
+	[4,'Ares'		,'Ares'			,1,1,	[7,8]			,[5,8]		,[120,140]		,[75,85,95]	,T_STANDARD | T_CARGO,I_MARATONER,''],
+	[4,'Neptune'	,'Neptun'		,1,1,	[9,10]			,[1,2]		,[220,250,260]	,[40,50,70]	,T_STANDARD | T_CARGO,I_LONG_HAUL,''],
+	[4,'Horus'		,'Horus'		,1,1,	[8,9,10]		,[15,18,20]	,[100,115]		,[50,70]	,T_STANDARD | T_CARGO,I_SHORT_HAUL,''],
+	[4,'Thor'		,'Thor'			,1,1,	[6,8]			,[10,12,17]	,[170,195,210]	,[35,50,60]	,T_STANDARD | T_CARGO,I_SPRINTER,''],
+	[4,'Poseidon'	,'Poseidon'		,3,1,	[23,24,27]		,[6,8,10]	,[140,160,170]	,[60,70,80]	,T_STANDARD | T_CARGO,I_ALL_ROUNDER,''],
+	[4,'Poseidon'	,'Poseidon'		,3,3,	[23,24,27]		,[6,8,10]	,[140,160,170]	,[60,70,80]	,T_STANDARD | T_CARGO,I_ALL_ROUNDER,''],
+	[4,'Hermes'		,'Hermes'		,1,1,	[75,85,95]		,[10,16]	,[240,260,280]	,[60,70,80]	,T_STANDARD | T_PAX,I_NONE,''],
+	[4,'Hypnos'		,'Hypnos'		,3,1,	[570,620,660]	,[1,2]		,[70,80,90]		,[60,75,90]	,T_STANDARD | T_PAX,I_NONE,''],
+	[4,'Hypnos'		,'Hypnos'		,3,3,	[570,620,660]	,[1,2]		,[70,80,90]		,[60,75,90]	,T_STANDARD | T_PAX,I_NONE,''],
+	[4,'Zeus'		,'Zeus'			,1,1,	[10,11]			,[7,12]		,[150,170]		,[80,90]	,T_BONUS | T_CARGO,I_NONE,''],
+	[4,'Hades'		,'Hades'		,1,1,	[150,170]		,[6,10]		,[200,230]		,[80,90]	,T_BONUS | T_PAX,I_NONE,''],
+
+	[5,'Unicorn'	,'Einhorn'		,1,1,	[8,10]			,[4,7]		,[130,150,160]	,[75,85,95]	,T_STANDARD | T_CARGO,I_MARATONER,''],
+	[5,'Medusa'		,'Medusa'		,1,1,	[8,9]			,[12,16]	,[200,225,240]	,[45,65]	,T_STANDARD | T_CARGO,I_SPRINTER,''],
+	[5,'Basilisk'	,'Basilisk'		,1,1,	[10,11]			,[6,8]		,[130,150,160]	,[50,65,75]	,T_STANDARD | T_CARGO,I_ALL_ROUNDER,''],
+	[5,'Satyr'		,'Satyr'		,1,1,	[10,11,12]		,[2,3]		,[230,260,280]	,[40,50,60]	,T_STANDARD | T_CARGO,I_LONG_HAUL,''],
+	[5,'Leviathan'	,'Leviathan'	,1,1,	[15,17,18]		,[1,2]		,[80,85,100]	,[35,50]	,T_STANDARD | T_CARGO,I_TRACTION_GIANT,''],
+	[5,'Centaur'	,'Zentaurus'	,4,1,	[42,46,50]		,[15,18,20]	,[100,120,135]	,[60,70,80]	,T_STANDARD | T_CARGO,I_SHORT_HAUL,''],
+	[5,'Centaur'	,'Zentaurus'	,4,4,	[42,46,50]		,[15,18,20]	,[100,120,135]	,[60,70,80]	,T_STANDARD | T_CARGO,I_SHORT_HAUL,''],
+	[5,'Talos'		,'Talos'		,4,1,	[800,880]		,[15,18]	,[90,105,120]	,[70,85]	,T_STANDARD | T_PAX,I_NONE,''],
+	[5,'Talos'		,'Talos'		,4,4,	[800,880]		,[15,18]	,[90,105,120]	,[70,85]	,T_STANDARD | T_PAX,I_NONE,''],
+	[5,'Aten'		,'Aten'			,1,1,	[120,130,145]	,[2,4,5]	,[260,280,300]	,[30,50]	,T_STANDARD | T_PAX,I_NONE,''],
+	[5,'Sphinx'		,'Sphinx'		,1,1,	[12,14]			,[10,15]	,[160,185]		,[75,85]	,T_BONUS | T_CARGO,I_NONE,''],
+	[5,'Icarus'		,'Ikaros'		,1,1,	[170,190]		,[15,20]	,[320,365]		,[75,85]	,T_BONUS | T_PAX,I_NONE,''],
+
+	[6,'Ogre'		,'Oger'			,1,1,	[20,23,25]		,[1]		,[65,80]		,[30,40,50]	,T_STANDARD | T_CARGO,I_TRACTION_GIANT,''],
+	[6,'Phoenix'	,'Phoenix'		,1,1,	[15,16,17]		,[1,2]		,[250,270,300]	,[50,60,70]	,T_STANDARD | T_CARGO,I_LONG_HAUL,''],
+	[6,'Pegasus'	,'Pegasus'		,1,1,	[10,13]			,[5,8]		,[120,130,150]	,[70,85,95]	,T_STANDARD | T_CARGO,I_MARATONER,''],
+	[6,'Lindworm'	,'Lindwurm'		,1,1,	[12,13,14]		,[7,10]		,[125,145,155]	,[60,75]	,T_STANDARD | T_CARGO,I_ALL_ROUNDER,''],
+	[6,'Hydra'		,'Hydra'		,1,1,	[15,16,18]		,[14,18,20]	,[80,95,105]	,[60,70,80]	,T_STANDARD | T_CARGO,I_SHORT_HAUL,''],
+	[6,'Olympus'	,'Olymp'		,5,1,	[50,60,65]		,[12,14,18]	,[200,225,250]	,[45,60,70]	,T_STANDARD | T_CARGO,I_SPRINTER,''],
+	[6,'Olympus'	,'Olymp'		,5,5,	[50,60,65]		,[12,14,18]	,[200,225,250]	,[45,60,70]	,T_STANDARD | T_CARGO,I_SPRINTER,''],
+	[6,'Minerva'	,'Minerva'		,1,1,	[170,190,205]	,[12,16,18]	,[310,320,330]	,[40,50,60]	,T_STANDARD | T_PAX,I_NONE,''],
+	[6,'Pluto'		,'Pluto'		,5,1,	[1550,1650,1750],[1,2,3]	,[100,115]		,[60,70,80]	,T_STANDARD | T_PAX,I_NONE,''],
+	[6,'Pluto'		,'Pluto'		,5,5,	[1550,1650,1750],[1,2,3]	,[100,115]		,[60,70,80]	,T_STANDARD | T_PAX,I_NONE,''],
+	[6,'Valkyrie'	,'Walküre'		,1,1,	[14,16]			,[10,15]	,[300,340]		,[70,90]	,T_BONUS | T_CARGO,I_NONE,''],
+	[6,'Venus'		,'Venus'		,1,1,	[260,295]		,[13,20]	,[320,370]		,[70,90]	,T_BONUS | T_PAX,I_NONE,''],
+
+	[7,'Titan'		,'Titan'		,1,1,	[40,46]			,[1,2]		,[100,115]		,[65,90]	,T_BONUS | T_CARGO,I_NONE,''],
+	[7,'Aurora'		,'Aurora'		,1,1,	[300,340]		,[20]		,[300,345,390]	,[65,90]	,T_BONUS | T_PAX,I_NONE,''],
+
+	[1,'Swallow'	,'Schwalbe'		,1,1,	[2,3]			,[7,9]		,[50,60]		,[40,60]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[1,'Raven'		,'Rabe'			,1,1,	[3,4]			,[1,2]		,[70,85]		,[30,50]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[1,'Rhinoceros'	,'Nashorn'		,1,1,	[3,4]			,[12,18]	,[60,70]		,[40,70]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[1,'Donkey'		,'Esel'			,1,1,	[5,6,7]			,[1,2]		,[50,60]		,[20,40]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[1,'Falcon'		,'Falke'		,1,1,	[3,4]			,[15,18,19]	,[140,160]		,[60]		,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[1,'Mole'		,'Maulwurf'		,1,1,	[4,5]			,[7,9,10]	,[100,110,120]	,[60,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[1,'Whale'		,'Wal'			,1,1,	[40,45]			,[4,5]		,[95,105,110]	,[50,60,70]	,T_STANDARD | T_PAX | T_OLD,I_NONE,''],
+	[1,'Red Kite'	,'Roter Milan'	,1,1,	[6,7]			,[6,10]		,[100,115]		,[95,100]	,T_BONUS | T_CARGO | T_OLD,I_NONE,''],
+	[1,'Dragonfly'	,'Libelle'		,1,1,	[40,45]			,[10,15]	,[140,160]		,[95,100]	,T_BONUS | T_PAX | T_OLD,I_NONE,''],
+
+	[2,'Bat'		,'Fledermaus'	,1,1,	[5,6]			,[10,12,13]	,[80,95]		,[50]		,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[2,'Panther'	,'Panther'		,1,1,	[4,5]			,[2,3]		,[150,170,180]	,[65,80,85]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[2,'Black Bear'	,'Schwarzbär'	,1,1,	[8]				,[6,11,13]	,[60,75]		,[20,40,60]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[2,'Lynx'		,'Luchs'		,1,1,	[3,5]			,[13,15,17]	,[135,150,160]	,[60,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[2,'Boar'		,'Eber'			,1,1,	[5,6]			,[8,11]		,[110,130]		,[40,50,60]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[2,'Elephant'	,'Elefant'		,1,1,	[10,11]			,[1,2,3]	,[50,60,65]		,[30,40]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[2,'Giraffe'	,'Giraffe'		,1,1,	[65,70,75]		,[3,4,5]	,[80,100,110]	,[30,40,50]	,T_STANDARD | T_PAX | T_OLD,I_NONE,''],
+	[2,'Bull'		,'Bulle'		,1,1,	[7,8]			,[5,9]		,[110,130]		,[90,95]	,T_BONUS | T_CARGO | T_OLD,I_NONE,''],
+	[2,'Kangaroo'	,'Känguru'		,1,1,	[85,95]			,[10,15]	,[100,115]		,[90,95]	,T_BONUS | T_PAX | T_OLD,I_NONE,''],
+
+	[3,'Odin'		,'Odin'			,1,1,	[4,5,6]			,[8,10]		,[100,120,130]	,[60,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Dionysos'	,'Dionysos'		,1,1,	[4,5]			,[14,17,18]	,[130,150]		,[60,65,95]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Herakles'	,'Herakles'		,1,1,	[8,9,10]		,[1]		,[65,80,85]		,[50,65,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Prometheus'	,'Prometheus'	,1,1,	[7,8]			,[3,4]		,[90,100]		,[50,65,75]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Osiris'		,'Osiris'		,1,1,	[7]				,[5,7]		,[100,120]		,[60,85,90]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Morpheus'	,'Morpheus'		,2,1,	[10,13]			,[3,5]		,[150,180,200]	,[80]		,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Morpheus'	,'Morpheus'		,2,2,	[10,13]			,[3,5]		,[150,180,200]	,[80]		,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Ajax'		,'Ajax'			,1,1,	[75,80,90]		,[10,12,14]	,[120,130,140]	,[60,70,80]	,T_STANDARD | T_PAX | T_OLD,I_NONE,''],
+	[3,'Isis'		,'Isis'			,1,1,	[8,9]			,[6,11]		,[120,140]		,[85,90]	,T_BONUS | T_CARGO | T_OLD,I_NONE,''],
+	[3,'Electra'	,'Elektra'		,1,1,	[95,110]		,[20]		,[160,185]		,[85,90,95]	,T_BONUS | T_PAX | T_OLD,I_NONE,''],
+
+	[4,'Apollo'		,'Apollon'		,1,1,	[8,9]			,[4,6]		,[75,90,100]	,[50,70]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Ares'		,'Ares'			,1,1,	[5,6]			,[15,19]	,[135,160]		,[70,90]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Neptune'	,'Neptun'		,1,1,	[7,8]			,[7,10,11]	,[90,120]		,[30,60,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Horus'		,'Horus'		,1,1,	[9,10]			,[3,4]		,[100,110]		,[50,60,70]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Thor'		,'Thor'			,1,1,	[6,7,8]			,[5,11,15]	,[110,140,150]	,[40,50,75]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Poseidon'	,'Poseidon'		,3,1,	[18,22]			,[5,9,12]	,[180,200,220]	,[60,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Poseidon'	,'Poseidon'		,3,3,	[18,22]			,[5,9,12]	,[180,200,220]	,[60,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Hermes'		,'Hermes'		,1,1,	[75,85,95]		,[5,7,8]	,[235,260,275]	,[50,60,70]	,T_STANDARD | T_PAX | T_OLD,I_NONE,''],
+	[4,'Zeus'		,'Zeus'			,1,1,	[9,10]			,[9,14]		,[150,170]		,[80,90]	,T_BONUS | T_CARGO | T_OLD,I_NONE,''],
+	[4,'Hades'		,'Hades'		,1,1,	[145,165]		,[6,10]		,[200,230]		,[80,90]	,T_BONUS | T_PAX | T_OLD,I_NONE,''],
+
+	[5,'Unicorn'	,'Einhorn'		,1,1,	[10,12]			,[1,2]		,[100,110,115]	,[40,60]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Medusa'		,'Medusa'		,1,1,	[5,6]			,[16,20]	,[210,250]		,[65,85,95]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Basilisk'	,'Basilisk'		,1,1,	[8,9]			,[4,6]		,[145,170]		,[50,75]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Satyr'		,'Satyr'		,1,1,	[9,10,11]		,[2]		,[160,195,200]	,[60,70,85]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Leviathan'	,'Leviathan'	,1,1,	[7,9,10]		,[18,20]	,[90,120]		,[70,95]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Centaur'	,'Zentaurus'	,4,1,	[28,32,36]		,[10,13,15]	,[150,165,190]	,[60,75,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Centaur'	,'Zentaurus'	,4,4,	[28,32,36]		,[10,13,15]	,[150,165,190]	,[60,75,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Talos'		,'Talos'		,1,1,	[180,190,200]	,[15,17,18]	,[110,130,140]	,[70,80,85]	,T_STANDARD | T_PAX | T_OLD,I_NONE,''],
+	[5,'Sphinx'		,'Sphinx'		,1,1,	[11,13]			,[10,15]	,[160,185]		,[75,85]	,T_BONUS | T_CARGO | T_OLD,I_NONE,''],
+	[5,'Icarus'		,'Ikaros'		,1,1,	[160,180]		,[15,20]	,[320,365]		,[75,85]	,T_BONUS | T_PAX | T_OLD,I_NONE,''],
+
+	[6,'Ogre'		,'Oger'			,1,1,	[11,12,13]		,[13,15,17]	,[100,115,130]	,[30,45,60]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Phoenix'	,'Phoenix'		,1,1,	[13,14]			,[1,2]		,[200,230,240]	,[50,70]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Pegasus'	,'Pegasus'		,1,1,	[12,14,15]		,[2,4]		,[100,130]		,[40,65,80]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Lindworm'	,'Lindwurm'		,1,1,	[13,15]			,[7,10]		,[140,160,180]	,[60,75]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Hydra'		,'Hydra'		,1,1,	[27,29,30]		,[1]		,[70,90]		,[40,60]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Olympus'	,'Olymp'		,5,1,	[65,80,85]		,[5,10,12]	,[100,130,150]	,[60,80,95]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Olympus'	,'Olymp'		,5,5,	[65,80,85]		,[5,10,12]	,[100,130,150]	,[60,80,95]	,T_STANDARD | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Minerva'	,'Minerva'		,1,1,	[250,280,300]	,[1,2,3]	,[310,320,330]	,[40,45,60]	,T_STANDARD | T_PAX | T_OLD,I_NONE,''],
+	[6,'Valkyrie'	,'Walküre'		,1,1,	[14,16]			,[10,15]	,[300,340]		,[70,90]	,T_BONUS | T_CARGO | T_OLD,I_NONE,''],
+	[6,'Venus'		,'Venus'		,1,1,	[255,290]		,[13,20]	,[320,370]		,[70,90]	,T_BONUS | T_PAX | T_OLD,I_NONE,''],
+
+	[7,'Titan'		,'Titan'		,1,1,	[40,46]			,[1,2]		,[100,115]		,[65,90]	,T_BONUS | T_CARGO | T_OLD,I_NONE,''],
+	[7,'Aurora'		,'Aurora'		,1,1,	[270,310]		,[20]		,[300,345,390]	,[65,90]	,T_BONUS | T_PAX | T_OLD,I_NONE,''],
+
+];
+
+const C_CHART_TYPE_ID_TONNES_H_FOR_SCHEDULE					= 0;
+const C_CHART_TYPE_ID_REVENUE_H_FOR_SCHEDULE				= 1;
+const C_CHART_TYPE_ID_TONNES_H_PER_TRACK_LENGTH				= 2;
+const C_CHART_TYPE_ID_REVENUE_H_PER_TRACK_LENGTH			= 3;
+const C_CHART_TYPE_ID_SECONDS_PER_TRACK_LENGTH				= 4;
+const C_CHART_TYPE_ID_SECONDS_FOR_SCHEDULE					= 5;
+const C_CHART_TYPE_ID_SECONDS_TROUGH_SCHEDULE				= 6;
+
+const C_CHART_TYPES_TYPE_ID									= 0;
+const C_CHART_TYPES_TEXT_EN									= 1;
+const C_CHART_TYPES_TEXT_DE									= 2;
+const C_CHART_INFO_TEXT_EN									= 3;
+const C_CHART_INFO_TEXT_DE									= 4;
+const C_CHART_INFO_MORE_TEXT_EN								= 5;
+const C_CHART_INFO_MORE_TEXT_DE								= 6;
+
+const C_CHART_PAX_INFO_OFFSET								= 6;
+const C_CHART_PAX_TYPES_TEXT_EN								= 7;
+const C_CHART_PAX_TYPES_TEXT_DE								= 8;
+const C_CHART_PAX_INFO_TEXT_EN								= 9;
+const C_CHART_PAX_INFO_TEXT_DE								= 10;
+const C_CHART_PAX_INFO_MORE_TEXT_EN							= 11;
+const C_CHART_PAX_INFO_MORE_TEXT_DE							= 12;
+
+const C_CHART_SCHEDULES										= 13;
+const C_CHART_SECONDS_CARGO									= 14;
+const C_CHART_SECONDS_PAX									= 15;
+
+const ChartTypeDefault 	= C_CHART_TYPE_ID_TONNES_H_FOR_SCHEDULE;
+var ChartType 			= ChartTypeDefault;
+var ChartTypeIndex  	= -1;
+var Pax_offset 			= 0;
+
+const CargoTracksTest 	= 10;
+const PaxTracksTest 	= 30;
+
+const ChartTypes=[
+	[
+		C_CHART_TYPE_ID_TONNES_H_FOR_SCHEDULE,
+		"Tonnes/1h for schedule","Tonnen/1h für den Fahrplan",
+		"Tonnes/1h (Wagons/1h) for schedule (higher is better)","Tonnen/1h (Waggons/1h) für den Fahrplan (höher ist besser)",
+		"How many tonnes of cargo do the engines transport in one hour for the selected schedule","Wie viele Tonnen Fracht transportieren die Züge in einer Stunde für den gewählten Fahrplan",
+		"Passengers/1h for schedule","Passagiere/h für den Fahrplan",
+		"Passengers/1h for schedule (higher is better)","Passagiere/h für den Fahrplan (höher ist besser)",
+		"How many passengers the engines transport in one hour for the selected schedule","Wie viele Passagiere die Züge in einer Stunde für den gewählten Fahrplan befördern",
+		3,0,0,
+	],
+	[
+		C_CHART_TYPE_ID_REVENUE_H_FOR_SCHEDULE,
+		"Profit/1h for schedule","Gewinn/1h für den Fahrplan",
+		"Profit/1h for schedule (higher is better)","Gewinn/1h für den Fahrplan (höher ist besser)",
+		"How much money do the engines earn in one hour for the selected schedule","Wie viel Geld verdienen die Züge in einer Stunde für den gewählten Fahrplan",
+		"Profit/1h for schedule","Gewinn/1h für den Fahrplan",
+		"Profit/1h for schedule (higher is better)","Gewinn/1h für den Fahrplan (höher ist besser)",
+		"How much money do the engines earn in one hour for the selected schedule","Wie viel Geld verdienen die Züge in einer Stunde für den gewählten Fahrplan",
+		3,0,0,
+	],
+/*	
+	[
+		C_CHART_TYPE_ID_SECONDS_FOR_SCHEDULE,
+		"Seconds for schedule","???",
+		"Seconds for schedule (lower is better)","???",
+		"How many seconds do the engines need for the selected schedule","???",
+		"Seconds for schedule","???",
+		"Seconds for schedule (lower is better)","???",
+		"How many seconds do the engines need for the selected schedule","???",
+		3,0,0,
+	],
+	[
+		C_CHART_TYPE_ID_SECONDS_TROUGH_SCHEDULE,
+		"Seconds trough schedule","???",
+		"Seconds through schedule (lower is better)","???",
+		"How many seconds do the engines need on the selected schedule","???",
+		"Seconds trough schedule","???",
+		"Seconds through schedule (lower is better)","???",
+		"How many seconds do the engines need on the selected schedule","???",
+		3,CargoTracksTest,PaxTracksTest,
+	],
+*/	
+	[
+		C_CHART_TYPE_ID_TONNES_H_PER_TRACK_LENGTH,
+		"Tonnes/h per track length","Tonnen/h pro Streckenzahl",
+		"Tonnes/h per track length (higher is better)","Tonnen/h pro Streckenzahl (höher ist besser)",
+		"How many tonnes of cargo do the engines transport in one hour on 1 to "+CargoTracksTest+" track lengths","Wie viele Tonnen transportieren die Züge in einer Stunde auf 1 bis "+CargoTracksTest+" Streckenzahl",
+		"Passengers/h per track length","Passagiere/h pro Streckenzahl",
+		"Passengers/h per track length (higher is better)","Passagiere/h pro Streckenzahl (höher ist besser)",
+		"How many passengers the engines transport in one hour on 1 to "+PaxTracksTest+" track lengths","Wie viele Personen die Züge in einer Stunde auf 1 bis "+PaxTracksTest+" Gleislängen befördern",
+		0,CargoTracksTest,PaxTracksTest,
+	],
+	[
+		C_CHART_TYPE_ID_REVENUE_H_PER_TRACK_LENGTH,
+		"Profit/h per track length","Gewinn/h pro Streckenzahl",
+		"Profit/h per track length (higher is better)","Gewinn/h pro Streckenzahl (höher ist besser)",
+		"How much money do the engines earn in one hour on 1 to "+CargoTracksTest+" track lengths","Wie viel Geld verdienen die Züge in einer Stunde auf 1 bis "+CargoTracksTest+" Gleislängen?",
+		"Profit/h per track length","Gewinn/h pro Streckenzahl",
+		"Profit/h per track length (higher is better)","Gewinn/h pro Streckenzahl (höher ist besser)",
+		"How much money do the engines earn in one hour on 1 to "+PaxTracksTest+" track lengths","Wie viel Geld verdienen die Züge in einer Stunde auf 1 bis "+PaxTracksTest+" Gleislängen?",
+		0,CargoTracksTest,PaxTracksTest,
+	],
+	[
+		C_CHART_TYPE_ID_SECONDS_PER_TRACK_LENGTH,
+		"Seconds per track length","Sekunden pro Streckenzahl",
+		"Seconds per track length (lower is better)","Sekunden pro Streckenzahl (niedriger ist besser)",
+		"How many seconds do the engines need for 1 to "+CargoTracksTest+" track lengths","Wie viele Sekunden benötigen die Züge für 1 bis "+CargoTracksTest+" Gleislängen?",
+		"Seconds per track length","Sekunden pro Streckenzahl",
+		"Seconds per track length (lower is better)","Sekunden pro Streckenzahl (niedriger ist besser)",
+		"How many seconds do the engines need for 1 to "+PaxTracksTest+" track lengths","Wie viele Sekunden benötigen die Züge für 1 bis "+PaxTracksTest+" Gleislängen?",
+		0,CargoTracksTest,PaxTracksTest,
+	],
+]
+
+/*
+    <input type="radio" name="tabLinks" id="tabLinks0" value="0" onchange="tabClick(this)" checked>
+    <label for="tabLinks0" name="tabLinksLabel" class=" active">Tonnes/h for schedule</label>
+    <input type="radio" name="tabLinks" id="tabLinks1" value="1" onchange="tabClick(this)">
+    <label for="tabLinks1" name="tabLinksLabel">Revenue/h for schedule</label>    
+    <input type="radio" name="tabLinks" id="tabLinks2" value="2" onchange="tabClick(this)">
+    <label for="tabLinks2" name="tabLinksLabel">Tonnes/h per track length</label>
+    <input type="radio" name="tabLinks" id="tabLinks3" value="3" onchange="tabClick(this)">
+    <label for="tabLinks3" name="tabLinksLabel">Revenue/h per track length</label>
+    <input type="radio" name="tabLinks" id="tabLinks4" value="4" onchange="tabClick(this)">
+    <label for="tabLinks4" name="tabLinksLabel">Seconds per track length</label>
+    <input type="radio" name="tabLinks" id="tabLinks5" value="5" onchange="tabClick(this)">
+    <label for="tabLinks5" name="tabLinksLabel">Seconds for schedule</label>
+    <input type="radio" name="tabLinks" id="tabLinks6" value="6" onchange="tabClick(this)">
+    <label for="tabLinks6" name="tabLinksLabel">Seconds trough schedule</label>
+*/	
+function init_chart_types() {
+	var	chart_list_html = '';
+	for (var i=0;i<ChartTypes.length;i++){
+		if (ChartTypes[i][C_CHART_TYPES_TYPE_ID]==ChartType)
+			ChartTypeIndex = i;
+		chart_list_html += 
+			'<input type="radio" name="tabLinks" id="tabLinks'+i+'" value="'+i+'" onchange="tabClick(this)" ' + (ChartTypeIndex == i?' checked':'') + '>\r\n'+
+			'<label for="tabLinks'+i+'" name="tabLinksLabel"' + (ChartTypeIndex == i?' class=" active"':'') + '>'+ChartTypes[i][C_CHART_TYPES_TEXT_EN+Lng_Index+Pax_offset]+'</label>\r\n';
+	}
+	cId('chart_list').innerHTML = chart_list_html;	
+}
+
+function STR_ERA()				{ return (Lng_Index == 0?'Era'					:'Epoche');}
+function STR_NAME()				{ return (Lng_Index == 0?'Name'					:'Name');}
+function STR_TYPE()				{ return (Lng_Index == 0?'Type'					:'Art');}
+function STR_BONUS()			{ return (Lng_Index == 0?'Bonus'				:'Bonus');}
+function STR_TRACTIVE_FORCE()	{ return (Lng_Index == 0?'Tractive Force'		:'Zugkraft');}
+function STR_ACCELERATION()		{ return (Lng_Index == 0?'Acceleration'			:'Beschleunigung');}
+function STR_SPEED()			{ return (Lng_Index == 0?'Speed'				:'Geschwindigkeit');}
+function STR_RELIABILITY()		{ return (Lng_Index == 0?'Reliability'			:'Zuverlässigkeit');}
+function STR_SCHEDULE()			{ return (Lng_Index == 0?'Schedule'				:'Fahrplan');}
+function STR_CARGO()			{ return (Lng_Index == 0?'Cargo'				:'Kargo');}
+function STR_PASSENGER()		{ return (Lng_Index == 0?'Passenger'			:'Passagier');}
+function STR_CAREER()			{ return (Lng_Index == 0?'Career Engine'		:'Karrierelok');}
+function STR_NEW()				{ return (Lng_Index == 0?'New'					:'Neu');}
+function STR_OLD()				{ return (Lng_Index == 0?'Old'					:'Alt');}
+function STR_SEC()				{ return (Lng_Index == 0?'sec'					:'sek');}
+
+
+function STR_S_TRACK_LENGTH()	{ return (Lng_Index == 0?'count of rails [between stops]':'Streckenzahl [zwischen den Anschlägen]');}
+function STR_S_ENGINE_HEALTH()	{ return (Lng_Index == 0?'Engine health'		:'Qualität Zug');}
+function STR_S_PROFIT()			{ return (Lng_Index == 0?'Profit'				:'Gewinn');}
+function STR_S_WAITING_TIME()	{ return (Lng_Index == 0?'Waiting time'			:'Wartezeit');}
+
+
+var aaCompareEngines=[];
+
+function check(a,b){
+	return (a & b) > 0;
+}
+
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
+/*
+speed test http://jsben.ch/#/LFfWA
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.split(search).join(replacement);
+};
+*/
+
+function EngineName(iEngineID,space_replace = false){
+	var Name = aaEngines[iEngineID][C_ENGINE_EN_NAME+Lng_Index];
+	var Engine_Type = aaEngines[iEngineID][C_ENGINE_TYPE];
+	if (check(Engine_Type,T_BONUS))
+		Name = 'B-'+Name;
+	
+	var NamePLUS = '';
+	
+	if (check(Engine_Type,T_CAREER) && (aaEngines[iEngineID][C_ENGINE_ERA] > 0)){
+		NamePLUS += '['+STR_ERA()+' '+aaEngines[iEngineID][C_ENGINE_ERA]+']';
+	}
+	if (check(Engine_Type,T_OLD))
+		Name = (Lng_Index == 0?'Old ':'Alt ')+Name;
+	if (aaEngines[iEngineID][C_ENGINE_SLOTS] > 1) {
+		if (aaEngines[iEngineID][C_ENGINE_SLOTS_VIEW] == 1){
+			NamePLUS += '[1 Slot]';
+		}else{
+			NamePLUS += '['+aaEngines[iEngineID][C_ENGINE_SLOTS_VIEW]+' Slots]';
+		}
+	}
+	if(space_replace){		
+		Name = Name.replaceAll(" ", "&nbsp;");
+		NamePLUS = NamePLUS.replaceAll(" ", "&nbsp;");
+	}
+	return Name + ' ' + NamePLUS;
+}
+
+function EngineGetData(iEngineID,Data,Index,ToSlotFix,real=false){
+	var value = aaEngines[iEngineID][Data][Index];
+	if (!real && (Data == C_ENGINE_TRACTIVE_FORCE) && (aaEngines[iEngineID][C_ENGINE_SLOTS_VIEW] == 1) && (aaEngines[iEngineID][C_ENGINE_SLOTS] > 1)){
+		if (value%aaEngines[iEngineID][C_ENGINE_SLOTS] == 0)
+			return Math.round(value/aaEngines[iEngineID][C_ENGINE_SLOTS]);
+		else
+			return (value/aaEngines[iEngineID][C_ENGINE_SLOTS]).toFixed(1);
+	}
+	return value;
+}
+
+function EngineToSlotFix(iEngineID,value){
+	if ((aaEngines[iEngineID][C_ENGINE_SLOTS_VIEW] == 1) && (aaEngines[iEngineID][C_ENGINE_SLOTS] > 1)){
+		return Math.round(value/aaEngines[iEngineID][C_ENGINE_SLOTS]);
+	}
+	return Math.round(value);
+}
+
+/*
+String.prototype.format = function() {
+    var formatted = this;
+    for (var i = 0; i < arguments.length; i++) {
+        var regexp = new RegExp('\\{'+i+'\\}', 'gi');
+        formatted = formatted.replace(regexp, arguments[i]);
+    }
+    return formatted;
+};
+With this option I can replace strings like these:
+'The {0} is dead. Don\'t code {0}. Code {1} that is open source!'.format('ASP', 'PHP');
+*/
+
+
+function cId(Id) {
+	return document.getElementById(Id);
+}
+function cName(Name) {
+	return document.getElementsByName(Name);
+}
+function nId(Id) {
+	return Number(cId(Id).value);
+}
+function hideunhide(divID) {
+	var item = cId(divID);
+	if (item) {
+		item.className=(item.className=='hidden')?'unhidden':'hidden';
+	}
+}
+function unhide(divID) {
+	var item = cId(divID);
+	if (item) {
+		if (item.className=='hidden')
+		item.className='unhidden';
+	}
+}
+function hide(divID) {
+	var item = cId(divID);
+	if (item) {
+		if (item.className=='unhidden')
+		item.className='hidden';
+	}
+}
+
+function init_web(){
+	var html = '';
+	
+	html += '<form class="noselect">\r\n';
+	html += '<fieldset class="boxyCheckbox">\r\n';
+	html += '    <legend>Rail Nation engine compare by GizmoXomziG & Hear Me Roar ver 3.01 (under development)</legend>\r\n';
+//	html += '    <legend>'+(Lng_Index == 0?'Add engines to compare list':'Zug zur Vergleichsliste hinzufügen')+'</legend>\r\n';
+	html += '    <input type="checkbox" name="type" id="typec" value="cargo" onclick="runFilterCargo()" checked>\r\n';
+	html += '    <label for="typec">'+STR_CARGO()+'</label>\r\n';
+	html += '    <input type="checkbox" name="type" id="typep" value="pax" onclick="runFilterPax()">\r\n';
+	html += '    <label for="typep" style="margin-right:10px;">'+STR_PASSENGER()+'</label>\r\n';
+	html += '    <br />\r\n';
+	html += '    <input type="checkbox" name="era" id="era1" value="1" onclick="runFilter()" checked>\r\n';
+	html += '    <label for="era1">'+STR_ERA()+' 1</label>\r\n';
+	html += '    <input type="checkbox" name="era" id="era2" value="2" onclick="runFilter()">\r\n';
+	html += '    <label for="era2">'+STR_ERA()+' 2</label>\r\n';
+	html += '    <input type="checkbox" name="era" id="era3" value="3" onclick="runFilter()">\r\n';
+	html += '    <label for="era3">'+STR_ERA()+' 3</label>\r\n';
+	html += '    <input type="checkbox" name="era" id="era4" value="4" onclick="runFilter()">\r\n';
+	html += '    <label for="era4">'+STR_ERA()+' 4</label>\r\n';
+	html += '    <input type="checkbox" name="era" id="era5" value="5" onclick="runFilter()">\r\n';
+	html += '    <label for="era5">'+STR_ERA()+' 5</label>\r\n';
+	html += '    <input type="checkbox" name="era" id="era6" value="6" onclick="runFilter()">\r\n';
+	html += '    <label for="era6">'+STR_ERA()+' 6</label>\r\n';
+	html += '    <input type="checkbox" name="era" id="era7" value="7" onclick="runFilter()">\r\n';
+	html += '    <label for="era7">'+STR_ERA()+' 7</label>\r\n';
+	html += '    <br />\r\n';
+	html += '    <input type="checkbox" name="bonus" id="bonus0" value="0" onclick="runFilter()" checked>\r\n';
+	html += '    <label for="bonus0">Standard</label>\r\n';
+	html += '    <input type="checkbox" name="bonus" id="bonus1" value="1" onclick="runFilter()">\r\n';
+	html += '    <label for="bonus1">Bonus</label>\r\n';
+	html += '    <input type="checkbox" name="bonus" id="bonus2" value="2" onclick="runFilter()">\r\n';
+	html += '    <label for="bonus2" style="margin-right:10px;">'+STR_CAREER()+'</label>\r\n';
+	html += '    <input type="checkbox" name="typeno" id="typen" value="new" onclick="runFilter()" checked>\r\n';
+	html += '    <label for="typen">'+STR_NEW()+'</label>\r\n';
+	html += '    <input type="checkbox" name="typeno" id="typeo" value="old" onclick="runFilter()">\r\n';
+	html += '    <label for="typeo" style="margin-right:10px;">'+STR_OLD()+'</label>\r\n';
+	html += '    <input type="checkbox" name="slots" id="slots1" value="slots1" onclick="runFilter()" checked>\r\n';
+	html += '    <label for="slots1">Multy [1 Slot]</label>\r\n';
+	html += '    <input type="checkbox" name="slots" id="slots2" value="slots2" onclick="runFilter()">\r\n';
+	html += '    <label for="slots2">Multy [2+ Slots]</label>\r\n';
+
+	html += '    <hr />\r\n';
+	html += '    <table class="boxyRadio" id="enginesByFilter">\r\n';
+	html += '    </table>\r\n';
+	html += '</fieldset>\r\n';
+	
+	html += '<fieldset>\r\n';
+ 	html += '   <legend>'+(Lng_Index == 0?'Engine compare list':'Vergleichsliste der Züge')+'</legend>\r\n';
+ 	html += '   <table class="boxyRadio" id="enginesToCompare">\r\n';
+ 	html += '   </table>\r\n';
+	html += '</fieldset>\r\n';
+	html += '<fieldset>\r\n';
+	html += '    <legend>'+STR_SCHEDULE()+': basic</legend>   \r\n';
+	html += '    <div style="float:left;margin-right:20px">\r\n';
+	html += '        <label for="engineHealth">'+STR_S_ENGINE_HEALTH()+'</label>\r\n';
+ 	html += '       <input id="engineHealth" type="range" name="engineHealth" min="1" max="100" step="1" value="100" oninput="engineHealthChange(1)">\r\n';
+ 	html += '       <input id="engineHealthN" type="number" name="engineHealth" min="1" max="100" step="1" value="100" onchange="engineHealthChange(0)" style="text-align: center;border-radius: 5px">\r\n';
+	html += '%'
+	html += '    </div>\r\n';
+	html += '\r\n';
+	html += '    <div style="float:left;margin-right:20px">\r\n';
+	html += '        <label for="revenue">'+STR_S_PROFIT()+'</label>\r\n';
+	html += '        <input id="revenue" type="range" name="revenue" min="1" max="10000" step="1" value="100" oninput="revenueChange(1)">\r\n';
+	html += '        <input id="revenueN" type="number" name="revenue" min="1" max="10000" step="1" value="100" onchange="revenueChange(0)" style="text-align: center;border-radius: 5px">\r\n';
+	html += '$'
+	html += '    </div>\r\n';  
+	html += '</fieldset>\r\n';
+	html += '<fieldset id="develop" class="hidden">\r\n';
+ 	html += '   <legend>Develop</legend>\r\n';
+	html += '    <div style="float:left;margin-right:20px;margin-top:7px">\r\n';
+	html += '        <label for="revenue">1 track length = approx.</label>\r\n';	
+	html += '		<input type="number" name="trackLength" min="1" max="9999" value="756" onchange="tracksChange(null)" style="text-align: center;border-radius: 5px"> meters\r\n';
+	html += '    </div>\r\n';
+	html += '</fieldset>\r\n';	
+	html += '<div id="cargo_schedules_waittime" class="hidden">\r\n';
+	html += '	<fieldset>\r\n';
+	html += '		<legend>'+STR_SCHEDULE()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTime"'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTime" type="range" name="waitTime" min="0" max="600" step="1" value="60" oninput="waitTimeChange(\'waitTime\',\'waitTimeN\')">\r\n';
+	html += '			<input id="waitTimeN" type="number" name="waitTime" min="0" max="600" step="1" value="60" onchange="waitTimeChange(\'waitTimeN\',\'waitTime\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '</div>\r\n';
+	html += '<div id="pax_schedules_waittime" class="hidden">\r\n';
+	html += '	<fieldset>\r\n';
+	html += '		<legend>'+STR_SCHEDULE()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTimePax">'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTimePax" type="range" name="waitTimePax" min="0" max="600" step="1" value="120" oninput="waitTimeChange(\'waitTimePax\',\'waitTimePaxN\')">\r\n';
+	html += '			<input id="waitTimePaxN" type="number" name="waitTimePax" min="0" max="600" step="1" value="120" onchange="waitTimeChange(\'waitTimePaxN\',\'waitTimePax\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '</div>\r\n';
+	html += '<div id="cargo_schedules" class="hidden">\r\n';
+	html += '	<fieldset>\r\n';
+	
+	 
+	html += '		<legend>'+STR_SCHEDULE()+' 1: '+STR_S_TRACK_LENGTH()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTime0">'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTime0" type="range" name="waitTime0" min="0" max="600" step="1" value="60" oninput="waitTimeChange(\'waitTime0\',\'waitTime0N\')">\r\n';
+	html += '			<input id="waitTime0N" type="number" name="waitTime0" min="0" max="600" step="1" value="60" onchange="waitTimeChange(\'waitTime0N\',\'waitTime0\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '		<div style="float:left;margin-right:20px;margin-top:7px;">\r\n';
+	html += '			<input id="tracks0_0" type="number" name="tracks0" min="1" max="99" style="width: 3em" value="1" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_1" type="number" name="tracks0" min="1" max="99" style="width: 3em" value="1" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_2" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_3" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_4" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_5" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_6" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_7" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_8" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '			<input id="tracks0_9" type="number" name="tracks0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks0\')">\r\n';
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '	<fieldset>\r\n';
+	html += '		<legend>'+STR_SCHEDULE()+' 2:'+STR_S_TRACK_LENGTH()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTime1">'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTime1" type="range" name="waitTime1" min="0" max="600" step="1" value="60" oninput="waitTimeChange(\'waitTime1\',\'waitTime1N\')">\r\n';
+	html += '			<input id="waitTime1N" type="number" name="waitTime1" min="0" max="600" step="1" value="60" onchange="waitTimeChange(\'waitTime1N\',\'waitTime1\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '		<div style="float:left;margin-right:20px;margin-top:7px;">\r\n';
+	html += '			<input id="tracks1_0" type="number" name="tracks1" min="1" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_1" type="number" name="tracks1" min="1" max="99" style="width: 3em" value="1" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_2" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="1" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_3" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="4" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_4" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_5" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_6" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_7" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_8" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '			<input id="tracks1_9" type="number" name="tracks1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks1\')">\r\n';
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '	<fieldset>\r\n';
+	html += '		<legend>'+STR_SCHEDULE()+' 3: '+STR_S_TRACK_LENGTH()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTime2">'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTime2" type="range" name="waitTime2" min="0" max="600" step="1" value="60" oninput="waitTimeChange(\'waitTime2\',\'waitTime2N\')">\r\n';
+	html += '			<input id="waitTime2N" type="number" name="waitTime2" min="0" max="600" step="1" value="60" onchange="waitTimeChange(\'waitTime2N\',\'waitTime2\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '		<div style="float:left;margin-right:20px;margin-top:7px;">\r\n';
+	html += '			<input id="tracks2_0" type="number" name="tracks2" min="1" max="99" style="width: 3em" value="4" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_1" type="number" name="tracks2" min="1" max="99" style="width: 3em" value="1" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_2" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_3" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="1" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_4" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_5" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="3" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_6" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_7" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_8" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '			<input id="tracks2_9" type="number" name="tracks2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracks2\')">\r\n';
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '</div>\r\n';
+	html += '<div id="pax_schedules" class="hidden">\r\n';
+	html += '	<fieldset>\r\n';
+	html += '		<legend>'+STR_SCHEDULE()+' 1: '+STR_S_TRACK_LENGTH()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTimePax0">'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTimePax0" type="range" name="waitTimePax0" min="0" max="600" step="1" value="120" oninput="waitTimeChange(\'waitTimePax0\',\'waitTimePax0N\')">\r\n';
+	html += '			<input id="waitTimePax0N" type="number" name="waitTimePax0" min="0" max="600" step="1" value="120" onchange="waitTimeChange(\'waitTimePax0N\',\'waitTimePax0\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '		<div style="float:left;margin-right:20px;margin-top:7px;">\r\n';
+	html += '			<input id="tracksPax0_0" type="number" name="tracksPax0" min="1" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_1" type="number" name="tracksPax0" min="1" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_2" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_3" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_4" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_5" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_6" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_7" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_8" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '			<input id="tracksPax0_9" type="number" name="tracksPax0" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax0\')">\r\n';
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '	<fieldset>\r\n';
+	html += '		<legend>'+STR_SCHEDULE()+' 2: '+STR_S_TRACK_LENGTH()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTimePax1">'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTimePax1" type="range" name="waitTimePax1" min="0" max="600" step="1" value="240" oninput="waitTimeChange(\'waitTimePax1\',\'waitTimePax1N\')">\r\n';
+	html += '			<input id="waitTimePax1N" type="number" name="waitTimePax1" min="0" max="600" step="1" value="240" onchange="waitTimeChange(\'waitTimePax1N\',\'waitTimePax1\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '		<div style="float:left;margin-right:20px;margin-top:7px;">\r\n';
+	html += '			<input id="tracksPax1_0" type="number" name="tracksPax1" min="1" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_1" type="number" name="tracksPax1" min="1" max="99" style="width: 3em" value="2" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_2" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_3" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_4" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_5" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_6" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_7" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_8" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '			<input id="tracksPax1_9" type="number" name="tracksPax1" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax1\')">\r\n';
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '	<fieldset>\r\n';
+	html += '		<legend>'+STR_SCHEDULE()+' 3: '+STR_S_TRACK_LENGTH()+'</legend>\r\n';
+	html += '		<div style="float:left;margin-right:20px;">\r\n';
+	html += '			<label for="waitTimePax2">'+STR_S_WAITING_TIME()+'</label>\r\n';
+	html += '			<input id="waitTimePax2" type="range" name="waitTimePax2" min="0" max="600" step="1" value="240" oninput="waitTimeChange(\'waitTimePax2\',\'waitTimePax2N\')">\r\n';
+	html += '			<input id="waitTimePax2N" type="number" name="waitTimePax2" min="0" max="600" step="1" value="240" onchange="waitTimeChange(\'waitTimePax2N\',\'waitTimePax2\')" style="text-align: center;border-radius: 5px">\r\n';
+	html += STR_SEC()
+	html += '		</div>\r\n';
+	html += '		<div style="float:left;margin-right:20px;margin-top:7px;">\r\n';
+	html += '			<input id="tracksPax2_0" type="number" name="tracksPax2" min="1" max="99" style="width: 3em" value="10" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_1" type="number" name="tracksPax2" min="1" max="99" style="width: 3em" value="10" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_2" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_3" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_4" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_5" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_6" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_7" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_8" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '			<input id="tracksPax2_9" type="number" name="tracksPax2" min="0" max="99" style="width: 3em" value="0" onchange="tracksChange(\'tracksPax2\')">\r\n';
+	html += '		</div>\r\n';
+	html += '	</fieldset>\r\n';
+	html += '</div>\r\n';
+	html += '\r\n';
+	html += '<div class="tab">\r\n';
+	html += '    <div style="float:left;margin-right:30px" class="boxyRadio">\r\n';
+	html += '        <input type="radio" name="2D3D" id="2D3D0" value="2D" onchange="change2D3D(0)" checked>\r\n';
+	html += '        <label for="2D3D0">2D</label>\r\n';
+	html += '        <input type="radio" name="2D3D" id="2D3D1" value="3D" onchange="change2D3D(1)" style="display:none;" disabled>\r\n';
+	html += '        <label for="2D3D1" style="display:none;">3D</label>\r\n';
+	html += '    </div>\r\n';
+	html += '	<div id="chart_list"></div>\r\n';
+	html += '</div>\r\n';
+	html += '</form>\r\n';
+	html += '\r\n';
+	html += '<br />\r\n';
+	html += '<div id="chart"></div>\r\n';
+	html += '<'+'script async src="https://drv.tw/inc/wd.js"></'+'script>\r\n';
+	
+	document.body.innerHTML = html;
+}
+
+function parse_query_string(query) {
+  var vars = query.split("&");
+  var query_string = {};
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split("=");
+    var key = decodeURIComponent(pair[0]);
+    var value = decodeURIComponent(pair[1]);
+    // If first entry with this name
+    if (typeof query_string[key] === "undefined") {
+      query_string[key] = decodeURIComponent(value);
+      // If second entry with this name
+    } else if (typeof query_string[key] === "string") {
+      var arr = [query_string[key], decodeURIComponent(value)];
+      query_string[key] = arr;
+      // If third or later entry with this name
+    } else {
+      query_string[key].push(decodeURIComponent(value));
+    }
+  }
+  return query_string;
+}
+
+function init() {
+	try {
+		var query = window.location.search.substring(1);
+		var qs = parse_query_string(query);
+		if ((qs == "DE") || (query == "DE")){
+			Lng_Index = 1;
+		}			
+		init_web();		
+		init_chart_types();
+		tracksChange(null);
+		runFilterCargo(false);
+		runCompare();
+	} catch(err) {
+		//
+	}
+}
+window.onload = init;
+
+function ShowSchedule() {
+	const ChartTypesInfo = ChartTypes[ChartTypeIndex];
+	const ChartTypesInfo_Schedules_Count = ChartTypesInfo[C_CHART_SCHEDULES];
+	var ChartTypesInfo_Seconds_Count = ChartTypesInfo[C_CHART_SECONDS_CARGO];
+	if (!Cargo)
+		ChartTypesInfo_Seconds_Count = ChartTypesInfo[C_CHART_SECONDS_PAX];
+	
+	if (Cargo)
+	{
+		if(ChartTypesInfo_Seconds_Count){
+			hide('cargo_schedules');
+			hide('pax_schedules');
+			unhide('cargo_schedules_waittime');
+			hide('pax_schedules_waittime');		
+		} else
+		{
+			unhide('cargo_schedules');
+			hide('pax_schedules');
+			hide('cargo_schedules_waittime');
+			hide('pax_schedules_waittime');		
+		}
+	}else
+	{
+		if(ChartTypesInfo_Seconds_Count){
+			hide('cargo_schedules');
+			hide('pax_schedules');
+			hide('cargo_schedules_waittime');
+			unhide('pax_schedules_waittime');		
+		} else
+		{
+			hide('cargo_schedules');
+			unhide('pax_schedules');
+			hide('cargo_schedules_waittime');
+			hide('pax_schedules_waittime');		
+		}
+	}
+	
+}
+
+function tabClick(oBtn) {
+	ChartTypeIndex = Number(oBtn.value);
+	ChartType = ChartTypes[ChartTypeIndex][C_CHART_TYPES_TYPE_ID];
+		
+	var tablinks = cName(oBtn.name + 'Label');
+	for (i=0;i<=tablinks.length-1;i++){
+		tablinks[i].className=tablinks[i].className.replace(" active", "");
+	}
+	tablinks[ChartTypeIndex].className += " active";
+	ShowSchedule();	
+	runCompare();
+}
+function checkFilter() {
+	var bTest; var chkTest;
+	var asFilter=['era','typeno','bonus','slots']
+	
+	for (var j=0;j<asFilter.length;j++){
+		var chkTest=cName(asFilter[j]);
+		bTest=false;
+		for (var i=0;i<chkTest.length;i++){
+			if (chkTest[i].checked) {
+				bTest=true;
+				break;
+			}
+		}
+		if (!bTest) {
+			for (var i=0;i<chkTest.length;i++){
+				chkTest[i].checked=true;
+			}
+		}
+	}	
+}
+
+function changeCompare(iBtn) {
+	for (var i=1;i<=3;i++){
+		var ahInputs=cName('c-' + ['',C_STR_TRACTIVE,C_STR_ACCELERATION,C_STR_SPEED,C_STR_RELIABILITY][i] + iBtn);
+		for (var j=0;j<ahInputs.length;j++){
+			if (ahInputs[j].checked) {
+				aaCompareEngines[iBtn][i]=Number(ahInputs[j].value);
+				break;
+			}
+		}
+	}
+	runCompare();
+}
+function showCompare() {
+	var sHTML='<table class="boxyRadio" id="enginesToCompare">';
+	sHTML +=  '	 <tr>';
+	sHTML +=  '	   <th>';
+	if (aaCompareEngines.length > 0) sHTML += '<button type="button" onclick="removeCompare(\'all\')" style="color:red">×</button>';
+	sHTML += '</th>';
+	sHTML +=  '	   <th>'+STR_ERA()+'</th>';
+	sHTML +=  '	   <th>'+STR_NAME()+'</th>';
+//	sHTML +=  '	   <th>'+STR_TYPE()+'</th>';
+//	sHTML +=  '	   <th>'+STR_BONUS()+'</th>';
+	sHTML +=  '	   <th>'+STR_TRACTIVE_FORCE()+'</th>';
+	sHTML +=  '	   <th>'+STR_ACCELERATION()+'</th>';
+	sHTML +=  '	   <th>'+STR_SPEED()+'</th>';
+	sHTML +=  '	   <th>'+STR_RELIABILITY()+'</th>';
+	sHTML +=  '	   <th></th>';
+	sHTML +=  '	 </tr>';
+	
+	for (var i=0;i<aaCompareEngines.length;i++){
+		var aaComparedEngine = aaCompareEngines[i];
+		var iEngineID = aaComparedEngine[0];
+		var Engine_Type = aaEngines[iEngineID][C_ENGINE_TYPE];
+
+		sHTML += '	<tr>';
+		sHTML += '	  <td><button type="button" onclick="removeCompare(' + i + ')" style="color:red">×</button>';
+		sHTML += '	  <td>' + aaEngines[iEngineID][C_ENGINE_ERA] + '</td>';
+		sHTML += '	  <td>' + EngineName(iEngineID,true) + '</td>';
+//		sHTML += '	  <td>' + (check(Engine_Type,T_CARGO)?STR_CARGO():STR_PASSENGER())+ '</td>';
+//		sHTML += '	  <td>' + (check(Engine_Type,T_BONUS)?STR_BONUS():'') + '</td>';
+		for (var k=C_ENGINE_TRACTIVE_FORCE;k<=C_ENGINE_RELIABILITY;k++){
+			sHTML += '	  <td>';
+			for (var j=0;j<aaEngines[iEngineID][k].length;j++){
+				var sId = 'c-' + EngineColumnStr(k) + i;
+				sHTML += '<input type="radio" name="' + sId + '" id="' + sId + '-' + j + '" value="' + j + '" onchange="changeCompare(' + i + ')"' + (j==aaCompareEngines[i][k-C_ENGINE_TRACTIVE_FORCE+1]?' checked':'') + '><label for="' + sId + '-' + j + '">' + EngineGetData(iEngineID,k,j) + '</label>';
+			}
+			sHTML += '</td>';
+		}
+		sHTML += '	  <td>' + EngineInfoStr(aaEngines[iEngineID][C_ENGINE_MORE_INFO]) + '</td>';
+		sHTML +=  '	 </tr>';
+	}
+	sHTML +=  '</table>';
+	
+	cId('enginesToCompare').outerHTML=sHTML;
+}
+
+const C_ENGINE_NAME_SHORT					= 0;
+const C_ENGINE_NAME_TAS						= 1;
+const C_ENGINE_NAME_FULL					= 2;
+const C_ENGINE_NAME_TRACTIVE_FORCE			= 3;
+
+function Chart_EngineName(iEngineID,NameType,index = -1,aCompEngineData = null){
+	var Name = EngineName(iEngineID);
+	
+	if (index >= 0){
+		Name = '(' + (index) + ') ' + Name;
+	}
+//	return Name;
+		
+	switch(NameType) {
+		case C_ENGINE_NAME_TAS:
+			Name += ' [' + EngineGetData(iEngineID,C_ENGINE_TRACTIVE_FORCE,aCompEngineData[1])
+				+ '/' + EngineGetData(iEngineID,C_ENGINE_ACCELERATION,aCompEngineData[2])
+				+ '/' + EngineGetData(iEngineID,C_ENGINE_SPEED,aCompEngineData[3]) + ']';
+			break;
+		case C_ENGINE_NAME_FULL:
+			Name += ' [' + EngineGetData(iEngineID,C_ENGINE_TRACTIVE_FORCE,aCompEngineData[1])
+				+ '/' + EngineGetData(iEngineID,C_ENGINE_ACCELERATION,aCompEngineData[2])
+				+ '/' + EngineGetData(iEngineID,C_ENGINE_SPEED,aCompEngineData[3])
+				+ '/' + EngineGetData(iEngineID,C_ENGINE_RELIABILITY,aCompEngineData[4]) + ']';
+			break;
+		case C_ENGINE_NAME_TRACTIVE_FORCE:
+			Name += ' [' + EngineGetData(iEngineID,C_ENGINE_TRACTIVE_FORCE,aCompEngineData[1]) + ']';
+			break;
+		default:
+	}	
+	return Name;
+}
+
+function initChartDiv(chartid){
+	return cId(chartid);
+}	
+
+function addChartDiv(chartid){
+	if (typeof chartid == 'string') {
+		cId('chart').innerHTML += "<div id="+chartid+"></div>";		
+	}else{
+		for (var i=0;i<chartid.length;i++){
+			cId('chart').innerHTML += "<div id="+chartid[i]+"></div>";		
+		}
+	}		
+}	
+
+function chart_title_make(chart_title_arr){
+	var chart_title = '';
+	if (typeof chart_title_arr == 'string') {
+		chart_title = chart_title_arr;
+	} else
+	for (var i=0;i<chart_title_arr.length;i++){
+		if (i > 0)
+			chart_title += '  #	 '; 
+		chart_title += chart_title_arr[i]; 
+	}	
+	return chart_title;
+}
+
+function ShowChart_2d_Compare_Draw(chartid,data,chart_title){
+	var options = {
+		title: chart_title,
+		width: window.innerWidth*0.98,
+		height: window.innerHeight*0.90,
+		chartArea: {'width': '95%', 'height': '85%'},
+		theme: 'material',
+		bar: {groupWidth: "95%"},
+		legend: { position: "bottom" },
+	};
+	
+	chart = new google.visualization.ColumnChart(initChartDiv(chartid));
+	chart.draw(data, options);	
+}
+
+function ShowChart_2d_ColumnChart_Draw(chartid,data,chart_title){
+	var options = {
+		title: chart_title,
+		width: window.innerWidth*0.98,
+		height: window.innerHeight*0.90,
+		chartArea: {'width': '95%', 'height': '85%'},
+		theme: 'material',
+		bar: {groupWidth: "95%"},
+		legend: { position: "bottom" },
+	};
+	
+	chart = new google.visualization.ColumnChart(initChartDiv(chartid));
+	chart.draw(data, options);	
+}
+
+function ShowChart_2d_LineChart_Draw(chartid,data,chart_title){
+	options = {
+		title: chart_title,
+		theme: 'material',
+		pointSize: 3,
+		chartArea: {'width': '95%', 'height': '85%'},
+		width: window.innerWidth*0.98,
+		height: window.innerHeight*0.90,
+			
+		hAxis: {slantedText:true},
+		vAxis: {minValue: 0},
+		explorer: { 
+			actions: ['dragToZoom', 'rightClickToReset'],
+			axis: 'horizontal',
+			keepInBounds: true,
+			maxZoomIn: 6.0},
+		legend: { position: "bottom" },
+	};
+	chart = new google.visualization.LineChart(initChartDiv(chartid));
+	chart.draw(data, options);	
+}
+
+function ShowChart_2d_LineChartTime_Draw(chartid,data,chart_title){
+	options = {
+		title: chart_title,
+		theme: 'material',
+		pointSize: 3,
+		chartArea: {'width': '95%', 'height': '85%'},
+		width: window.innerWidth*0.98,
+		height: window.innerHeight*0.90,
+			
+		hAxis: {slantedText:true},
+//		vAxis: {minValue: 0},
+        vAxis: {
+            format: 'm:ss'
+        },
+		explorer: { 
+			actions: ['dragToZoom', 'rightClickToReset'],
+			axis: 'horizontal',
+			keepInBounds: true,
+			maxZoomIn: 6.0},
+		legend: { position: "bottom" },
+	};
+	chart = new google.visualization.LineChart(initChartDiv(chartid));
+	chart.draw(data, options);	
+}
+
+  
+function ShowChart_2d_CompareRowData(chartid,CompareRowData,chart_title_arr){
+	var RowData = [];
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	
+	var chart_title = chart_title_make(chart_title_arr);
+	
+	arrData = [chart_title_arr[0]];
+	for (var i=0;i<CompareRowData.length;i++){
+		arrData.push(STR_SCHEDULE()	+ ' ' + (i+1));
+	}
+	RowData.push(arrData);
+
+	for (var j=0;j<CompareRowData[0].length;j++){
+		aCompEngineData=aaCompareEngines[j];
+		iEngineID=aCompEngineData[0];
+		arrData = [Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,-1,aCompEngineData)];
+		for (var i=0;i<CompareRowData.length;i++){
+			arrData.push(CompareRowData[i][j]);
+		}
+		RowData.push(arrData);
+	}
+	
+	data = google.visualization.arrayToDataTable(RowData);
+
+	ShowChart_2d_Compare_Draw(chartid,data,chart_title);
+}
+  
+/* Tonnes/h for schedule - HOW MANY TONNES OF CARGO DO THE ENGINES TRANSPORT IN ONE HOUR FOR THE SELECTED SCHEDULE */
+function ShowChart_2d_Tonnes_h_for_schedule(chartid,aaCompareSchedulesSeconds,chart_title_arr = '') {
+	var RowData = [];
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	var chart_title = chart_title_make(chart_title_arr);
+	
+//	aRow = [chart_title_arr[0]];	
+	aRow = [''];	
+
+	arrData = [['Engine comparison']];
+	for (var i=0;i<aaCompareSchedulesSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		arrData[0].push(Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,i+1,aCompEngineData));
+	}
+	
+	for (var i=0;i<aaCompareSchedulesSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		
+		var RowDataValue = EngineToSlotFix(iEngineID,(Number(aaEngines[iEngineID][C_ENGINE_TRACTIVE_FORCE][aCompEngineData[1]])
+				  * 60 * 60 / aaCompareSchedulesSeconds[i][aaCompareSchedulesSeconds[0].length-1]));
+		aRow.push(RowDataValue);
+		RowData.push(RowDataValue);
+	}
+	arrData.push(aRow);
+
+	data = google.visualization.arrayToDataTable(arrData);
+
+	ShowChart_2d_ColumnChart_Draw(chartid,data,chart_title);
+		
+	return RowData;
+}
+
+
+/* Revenue/h for schedule - HOW MUCH MONEY DO THE ENGINES EARN IN ONE HOUR FOR THE SELECTED SCHEDULE */
+function ShowChart_2d_Revenue_h_for_schedule(chartid,aaCompareSchedulesSeconds,iRevenue,chart_title_arr = '') {
+	var RowData = [];
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	var chart_title = chart_title_make(chart_title_arr);
+	
+//	aRow = [chart_title_arr[0]];	
+	aRow = [''];	
+	
+	arrData = [['Engine comparison']];
+	for (var i=0;i<aaCompareSchedulesSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		arrData[0].push(Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,i+1,aCompEngineData));
+	}
+
+	for (var i=0;i<aaCompareSchedulesSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		var RowDataValue = EngineToSlotFix(iEngineID,(Number(aaEngines[iEngineID][C_ENGINE_TRACTIVE_FORCE][aCompEngineData[1]])
+				  * 60 * 60 / aaCompareSchedulesSeconds[i][aaCompareSchedulesSeconds[0].length-1]
+				  * iRevenue));
+		aRow.push(RowDataValue);
+		RowData.push(RowDataValue);
+	}
+	arrData.push(aRow);
+
+	data = google.visualization.arrayToDataTable(arrData);
+	
+	ShowChart_2d_ColumnChart_Draw(chartid,data,chart_title);
+	
+	return RowData;
+}
+
+/* Seconds for schedule - HOW MANY SECONDS DO THE ENGINES NEED FOR THE SELECTED SCHEDULE */
+function ShowChart_2d_Seconds_for_schedule(chartid,aaCompareSchedulesSeconds,chart_title_arr = '') {
+	var RowData = [];
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	var chart_title = chart_title_make(chart_title_arr);
+	
+	aRow = [chart_title_arr[0]];	
+
+	arrData = [['Engine comparison']];
+	for (var i=0;i<aaCompareSchedulesSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		arrData[0].push(Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,i+1,aCompEngineData));
+	}
+
+	for (var i=0;i<aaCompareSchedulesSeconds.length;i++){
+		aRow.push(aaCompareSchedulesSeconds[i][aaCompareSchedulesSeconds[0].length-1]);
+		RowData.push(aaCompareSchedulesSeconds[i][aaCompareSchedulesSeconds[0].length-1]);
+	}
+	arrData.push(aRow);
+
+	data = google.visualization.arrayToDataTable(arrData);
+	
+	ShowChart_2d_ColumnChart_Draw(chartid,data,chart_title);
+	
+	return RowData;
+}
+
+
+/* Seconds trough schedule - HOW MANY SECONDS DO THE ENGINES NEED ON THE SELECTED SCHEDULE */
+function ShowChart_2d_Seconds_trough_schedule(chartid,aaCompare10TSeconds,aaCompareSchedulesSeconds,chart_title_arr = '') {
+	var RowData = [];
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	var chart_title = chart_title_make(chart_title_arr);
+	
+	arrData = [['Track length']];
+	for (var i=0;i<aaCompare10TSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		arrData[0].push(Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,i+1,aCompEngineData));
+	}
+	aRow=[0];
+	for (var i=0;i<aaCompare10TSeconds.length;i++){
+		aRow.push(0);
+	}
+//	arrData.push(aRow);
+	for (var i=0;i<aaCompareSchedulesSeconds[0].length;i++){
+		aRow=[i+1];
+		for (var j=0;j<aaCompareSchedulesSeconds.length;j++){
+			aRow.push(aaCompareSchedulesSeconds[j][i]);
+			RowData.push(aaCompareSchedulesSeconds[j][i]);
+		}
+		arrData.push(aRow);
+	}
+
+	data = google.visualization.arrayToDataTable(arrData);
+	
+	ShowChart_2d_LineChart_Draw(chartid,data,chart_title);
+	
+	return RowData;
+}
+
+/* Tonnes/h per track length - HOW MANY TONNES OF CARGO DO THE ENGINES TRANSPORT IN ONE HOUR ON 1 TO 10 TRACK LENGTHS */
+function ShowChart_2d_Tonnes_h_per_track_length(chartid,aaCompare10TSeconds,chart_title_arr = '') {
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	var chart_title = chart_title_make(chart_title_arr);
+	
+//	aRow = [chart_title_arr[0]];	
+	aRow = [];
+
+	arrData = [['Track length']];
+	for (var i=0;i<aaCompare10TSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		arrData[0].push(Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,i+1,aCompEngineData));
+	}
+	for (var i=0;i<aaCompare10TSeconds[0].length;i++){
+		aRow=[i+1];
+		for (var j=0;j<aaCompare10TSeconds.length;j++){
+			aCompEngineData=aaCompareEngines[j];
+			iEngineID=aCompEngineData[0];
+			aRow.push(EngineToSlotFix(iEngineID,Number(aaEngines[iEngineID][C_ENGINE_TRACTIVE_FORCE][aCompEngineData[1]])
+					  * 60 * 60 / aaCompare10TSeconds[j][i]));
+		}
+		arrData.push(aRow);
+	}
+
+	data = google.visualization.arrayToDataTable(arrData);
+	
+	ShowChart_2d_LineChart_Draw(chartid,data,chart_title);
+}
+
+/* Revenue/h per track length - HOW MUCH MONEY DO THE ENGINES EARN IN ONE HOUR ON 1 TO 10 TRACK LENGTHS */
+function ShowChart_2d_Revenue_h_per_track_length(chartid,aaCompare10TSeconds,iRevenue,chart_title_arr = ''){
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	var chart_title = chart_title_make(chart_title_arr);
+	
+	aRow = [chart_title_arr[0]];	
+	
+	arrData = [['Track length']];
+	for (var i=0;i<aaCompare10TSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		arrData[0].push(Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,i+1,aCompEngineData));
+	}
+	for (var i=0;i<aaCompare10TSeconds[0].length;i++){
+		aRow=[i+1];
+		for (var j=0;j<aaCompare10TSeconds.length;j++){
+			aCompEngineData=aaCompareEngines[j];
+			iEngineID=aCompEngineData[0];
+			aRow.push(EngineToSlotFix(iEngineID,(Number(aaEngines[iEngineID][C_ENGINE_TRACTIVE_FORCE][aCompEngineData[1]])
+					  * 60 * 60 / aaCompare10TSeconds[j][i]
+					  * iRevenue)));
+		}
+		arrData.push(aRow);
+	}
+
+	data = google.visualization.arrayToDataTable(arrData);
+	
+	ShowChart_2d_LineChart_Draw(chartid,data,chart_title);
+}		
+
+
+/* Seconds per track length - HOW MANY SECONDS DO THE ENGINES NEED FOR 1 TO 10 TRACK LENGTHS */
+function ShowChart_2d_Seconds_per_track_length(chartid,aaCompare10TSeconds,chart_title_arr = '') {
+	var arrData;
+	var aRow;
+	var aCompEngineData;
+	var iEngineID;
+	
+	var data;
+	var options;
+	var chart;
+
+	
+	var chart_title = chart_title_make(chart_title_arr);
+	
+	aRow = [chart_title_arr[0]];	
+	
+	arrData = [['Track length']];
+	for (var i=0;i<aaCompare10TSeconds.length;i++){
+		aCompEngineData=aaCompareEngines[i];
+		iEngineID=aCompEngineData[0];
+		arrData[0].push(Chart_EngineName(iEngineID,C_ENGINE_NAME_TAS,i+1,aCompEngineData));
+	}
+	for (var i=0;i<aaCompare10TSeconds[0].length;i++){
+		aRow=[i+1];
+		for (var j=0;j<aaCompare10TSeconds.length;j++){
+			aRow.push(new Date(2001, 1, 1, 0, 0, aaCompare10TSeconds[j][i], 0));			
+		}
+		arrData.push(aRow);
+	}
+	data = google.visualization.arrayToDataTable(arrData);
+    var timeFormatter = new google.visualization.DateFormat({
+        pattern: "m:ss"
+//        pattern: "m:ss.SSS"
+    });
+	for (var i=1;i<=aaCompare10TSeconds.length;i++){
+		timeFormatter.format(data, i);
+	}
+	
+	ShowChart_2d_LineChartTime_Draw(chartid,data,chart_title);
+}
+
+
+function calculateTime(iAcceleration,iMaxSpeed,fDistance) {
+	var iCurSpeed=0;
+	var iSeconds=0;
+	if (fDistance == 0.0) {return 0};
+	do {
+		iSeconds++;
+		iCurSpeed += iAcceleration;
+		if (iCurSpeed > iMaxSpeed) iCurSpeed = iMaxSpeed;
+		fDistance -= iCurSpeed * 1000 / 60 / 60 * 1; //v=x/t ; x=v*t
+	} while (fDistance > 0);
+	return iSeconds;
+}
+
+function CalcCompareSchedulesSeconds(aoTrackLengths,iWaitTime,aData,fEngineHealth,iTrackLength) {
+	var iSeconds;
+	var aiCompareSeconds=[];
+	
+	//Calcuate Schedule 1
+	var iSumSeconds=0;
+	var iScheduleSeconds=0;
+
+	var zero_found = false;
+	
+	for (var j=0;j<aoTrackLengths.length;j++){ //for all 10 travel legs in the "Schedule: track lengths"
+		var iScheduleTracks = Number(aoTrackLengths[j].value); //iScheduleTracks <-- number of tracks at the current travel leg of the schedule
+		if (iScheduleTracks == 0) 
+			zero_found = true;
+		if (zero_found)
+			iScheduleTracks = 0;
+		
+		for (var k=1;k<=iScheduleTracks;k++){ //for 1-k tracks in the current travel leg of the schedule
+			iSeconds = calculateTime(aData[1], aData[2]*fEngineHealth, iTrackLength * k); //time required to travel k tracks
+			aiCompareSeconds.push(iScheduleSeconds + iSeconds); //aiCompareSeconds <-- cumulative time after every track traveled
+		}
+		
+		iSeconds = calculateTime(aData[1], aData[2]*fEngineHealth, iTrackLength * iScheduleTracks); //iSeconds <-- time required to travel the current travel leg of the schedule
+		iSumSeconds += iSeconds; //iSumSeconds <-- cumulative time after every travel leg traveled
+		iScheduleSeconds += iSeconds;
+	}
+	iSeconds = iWaitTime;
+	aiCompareSeconds.push(iScheduleSeconds + iSeconds);
+	iSumSeconds += iSeconds;
+	iScheduleSeconds += iSeconds;
+	
+	return aiCompareSeconds;
+}
+
+function ScheduleStr(Num,TrackLengths,iWaitTime) {
+	var res = STR_SCHEDULE()+' '+Num+' [wt '+iWaitTime+' '+STR_SEC()+'] ';
+	
+	for (var j=0;j<TrackLengths.length;j++){ //for all 10 travel legs in the "Schedule: track lengths"
+		var iScheduleTracks = Number(TrackLengths[j].value); //iScheduleTracks <-- number of tracks at the current travel leg of the schedule	
+		if (iScheduleTracks == 0) 
+			break;
+		if (iScheduleTracks){
+			if (j > 0)
+			res += ' ... ';
+			res += iScheduleTracks;
+		}
+	}
+	return res;
+}
+	
+function runCompare() {
+	showCompare();
+	
+	const ChartTypesInfo = ChartTypes[ChartTypeIndex];
+	const ChartTypesInfo_Schedules_Count = ChartTypesInfo[C_CHART_SCHEDULES];
+	var ChartTypesInfo_Seconds_Count = ChartTypesInfo[C_CHART_SECONDS_CARGO];
+	if (!Cargo)
+		ChartTypesInfo_Seconds_Count = ChartTypesInfo[C_CHART_SECONDS_PAX];
+	
+	if (aaCompareEngines.length<1) {
+		cId('chart').hidden=true;
+		return;
+	}
+	cId('chart').hidden=false;
+	if (!bGoogleChartsLoaded) { 
+		cId('chart').innerHTML='Google charts library still loading ...';
+		return;
+	}
+	
+	var aaCompare10TSeconds=[];
+	var iTrackLength=Number(cName('trackLength')[0].value);
+	var aoTrackLengths0=[];
+	var aoTrackLengths1=[];
+	var aoTrackLengths2=[];
+	var iWaitTime=0;
+	var iWaitTime0=0;
+	var iWaitTime1=0;
+	var iWaitTime2=0;
+	
+	if (Cargo){
+		aoTrackLengths0=cName('tracks0');
+		aoTrackLengths1=cName('tracks1');
+		aoTrackLengths2=cName('tracks2');
+		iWaitTime=Number(cId('waitTime').value);
+		iWaitTime0=Number(cId('waitTime0').value);
+		iWaitTime1=Number(cId('waitTime1').value);
+		iWaitTime2=Number(cId('waitTime2').value);
+	}else{
+		aoTrackLengths0=cName('tracksPax0');
+		aoTrackLengths1=cName('tracksPax1');
+		aoTrackLengths2=cName('tracksPax2');
+		iWaitTime=Number(cId('waitTimePax').value);
+		iWaitTime0=Number(cId('waitTimePax0').value);
+		iWaitTime1=Number(cId('waitTimePax1').value);
+		iWaitTime2=Number(cId('waitTimePax2').value);
+	}
+	
+	var aaCompareSchedulesSeconds0=[];
+	var aaCompareSchedulesSeconds1=[];
+	var aaCompareSchedulesSeconds2=[];
+	
+	
+	var fEngineHealth=Number(cId('engineHealth').value)/100.0;
+	var iRevenue=Number(cId('revenue').value);
+	var strSchedule1 = ScheduleStr(1,aoTrackLengths0,iWaitTime0);
+	var strSchedule2 = ScheduleStr(2,aoTrackLengths1,iWaitTime1);
+	var strSchedule3 = ScheduleStr(3,aoTrackLengths2,iWaitTime2);
+		
+	for (var i=0;i<aaCompareEngines.length;i++){ //for every engine in the "Engine compare list"
+	
+		var aData=[0,0,0,0];
+		for (var j=0;j<4;j++){ //aData <-- [Tractive Force, Acceleration, Speed, Reliability]
+			aData[j]=aaEngines[aaCompareEngines[i][0]][C_ENGINE_TRACTIVE_FORCE+j][aaCompareEngines[i][j+1]];
+		}
+
+		if (ChartTypesInfo_Seconds_Count > 0)
+		{
+			//Calcuate Compare10TSeconds
+			var iSeconds;
+			var aiCompareSeconds=[];
+			for (var j=1;j<=ChartTypesInfo_Seconds_Count;j++){ //aiCompareSeconds <-- time required to travel 1-10 tracks
+				iSeconds = calculateTime(aData[1], aData[2]*fEngineHealth, iTrackLength * j * 2) + iWaitTime;
+				aiCompareSeconds.push(iSeconds);
+			}
+			aaCompare10TSeconds.push(aiCompareSeconds);
+		}
+		
+		if (ChartTypesInfo_Schedules_Count > 0)
+		{
+			//Calcuate Schedule 1
+			aaCompareSchedulesSeconds0.push(CalcCompareSchedulesSeconds(aoTrackLengths0,iWaitTime0,aData,fEngineHealth,iTrackLength));
+			//Calcuate Schedule 2
+			aaCompareSchedulesSeconds1.push(CalcCompareSchedulesSeconds(aoTrackLengths1,iWaitTime1,aData,fEngineHealth,iTrackLength));
+			//Calcuate Schedule 3
+			aaCompareSchedulesSeconds2.push(CalcCompareSchedulesSeconds(aoTrackLengths2,iWaitTime2,aData,fEngineHealth,iTrackLength));		
+		}
+	}
+	
+	
+	var CompareRowData = [];
+	var ChartTypeStr = ChartTypesInfo[C_CHART_TYPES_TEXT_EN+Lng_Index+Pax_offset];
+	
+	cId('chart').innerHTML = "<div class='chart_text'><b>"+ChartTypesInfo[C_CHART_INFO_TEXT_EN+Lng_Index+Pax_offset]+"</b></div>"+
+							"<div class='chart_text'>"+ChartTypesInfo[C_CHART_INFO_MORE_TEXT_EN+Lng_Index+Pax_offset]+"</div>";
+
+	{ //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D //2D 
+		switch (ChartType){
+		case C_CHART_TYPE_ID_TONNES_H_FOR_SCHEDULE: 
+			addChartDiv(['chart0','chart1','chart2','chartCompare']);
+			/* Tonnes/h for schedule - HOW MANY TONNES OF CARGO DO THE ENGINES TRANSPORT IN ONE HOUR FOR THE SELECTED SCHEDULE */
+			CompareRowData.push(ShowChart_2d_Tonnes_h_for_schedule('chart0',aaCompareSchedulesSeconds0,[ChartTypeStr,strSchedule1]));
+			CompareRowData.push(ShowChart_2d_Tonnes_h_for_schedule('chart1',aaCompareSchedulesSeconds1,[ChartTypeStr,strSchedule2]));
+			CompareRowData.push(ShowChart_2d_Tonnes_h_for_schedule('chart2',aaCompareSchedulesSeconds2,[ChartTypeStr,strSchedule3]));
+			ShowChart_2d_CompareRowData('chartCompare',CompareRowData,[ChartTypeStr,strSchedule1,strSchedule2,strSchedule3]);
+			break;
+		case C_CHART_TYPE_ID_REVENUE_H_FOR_SCHEDULE: 
+			addChartDiv(['chart0','chart1','chart2','chartCompare']);
+			/* Revenue/h for schedule - HOW MUCH MONEY DO THE ENGINES EARN IN ONE HOUR FOR THE SELECTED SCHEDULE */
+			CompareRowData.push(ShowChart_2d_Revenue_h_for_schedule('chart0',aaCompareSchedulesSeconds0,iRevenue,[ChartTypeStr,strSchedule1]));
+			CompareRowData.push(ShowChart_2d_Revenue_h_for_schedule('chart1',aaCompareSchedulesSeconds1,iRevenue,[ChartTypeStr,strSchedule2]));
+			CompareRowData.push(ShowChart_2d_Revenue_h_for_schedule('chart2',aaCompareSchedulesSeconds2,iRevenue,[ChartTypeStr,strSchedule3]));
+			ShowChart_2d_CompareRowData('chartCompare',CompareRowData,[ChartTypeStr,strSchedule1,strSchedule2,strSchedule3]);
+			break;
+		case C_CHART_TYPE_ID_TONNES_H_PER_TRACK_LENGTH: 
+			addChartDiv(['chart0']);
+			/* Tonnes/h per track length - HOW MANY TONNES OF CARGO DO THE ENGINES TRANSPORT IN ONE HOUR ON 1 TO 10 TRACK LENGTHS */
+			ShowChart_2d_Tonnes_h_per_track_length('chart0',aaCompare10TSeconds);
+			break;
+		case C_CHART_TYPE_ID_REVENUE_H_PER_TRACK_LENGTH: 
+			addChartDiv(['chart0']);
+			/* Revenue/h per track length - HOW MUCH MONEY DO THE ENGINES EARN IN ONE HOUR ON 1 TO 10 TRACK LENGTHS */
+			ShowChart_2d_Revenue_h_per_track_length('chart0',aaCompare10TSeconds,iRevenue);
+			break;
+		case C_CHART_TYPE_ID_SECONDS_PER_TRACK_LENGTH: 
+			addChartDiv(['chart0']);
+			/* Seconds per track length - HOW MANY SECONDS DO THE ENGINES NEED FOR 1 TO 10 TRACK LENGTHS */
+			ShowChart_2d_Seconds_per_track_length('chart0',aaCompare10TSeconds);
+			break;
+		case C_CHART_TYPE_ID_SECONDS_FOR_SCHEDULE: 
+			addChartDiv(['chart0','chart1','chart2','chartCompare']);
+			/* Seconds for schedule - HOW MANY SECONDS DO THE ENGINES NEED FOR THE SELECTED SCHEDULE */
+			CompareRowData.push(ShowChart_2d_Seconds_for_schedule('chart0',aaCompareSchedulesSeconds0,[ChartTypeStr,strSchedule1]));
+			CompareRowData.push(ShowChart_2d_Seconds_for_schedule('chart1',aaCompareSchedulesSeconds1,[ChartTypeStr,strSchedule2]));
+			CompareRowData.push(ShowChart_2d_Seconds_for_schedule('chart2',aaCompareSchedulesSeconds2,[ChartTypeStr,strSchedule3]));
+			ShowChart_2d_CompareRowData('chartCompare',CompareRowData,[ChartTypeStr,strSchedule1,strSchedule2,strSchedule3]);
+			break;
+		case C_CHART_TYPE_ID_SECONDS_TROUGH_SCHEDULE: 
+			addChartDiv(['chart0']);
+			/* Seconds trough schedule - HOW MANY SECONDS DO THE ENGINES NEED ON THE SELECTED SCHEDULE */
+			ShowChart_2d_Seconds_trough_schedule('chart0',aaCompare10TSeconds,aaCompareSchedulesSeconds0,[ChartTypeStr,strSchedule1]);
+			break;
+		}		
+	} 
+ 		
+}
+
+function addCompare(iBtn,run_compare=true){
+	if (iBtn == 'all') {
+		removeCompare('all',false);
+		for (var i=0;i<aaEngines.length;i++) {
+			if (cId(C_STR_TRACTIVE + i + '-0') != null) {
+				addCompare(i,false);
+			}
+		}
+	} else {
+		var aiEngine=[iBtn,0,0,0,0];
+		for (var i=1;i<=4;i++){
+			var ahInputs=document.getElementsByName(['',C_STR_TRACTIVE,C_STR_ACCELERATION,C_STR_SPEED,C_STR_RELIABILITY][i] + iBtn);
+			for (var j=0;j<ahInputs.length;j++){
+				if (ahInputs[j].checked) {
+					aiEngine[i]=Number(ahInputs[j].value);
+					break;
+				}
+			}
+		}
+		aaCompareEngines.push(aiEngine);
+	}
+	if (run_compare)
+		runCompare();
+}
+function removeCompare(iBtn,run_compare=true){
+	if (iBtn == 'all') {
+		aaCompareEngines.splice(iBtn, aaCompareEngines.length);
+	} else {
+		aaCompareEngines.splice(iBtn, 1);
+	}
+	if (run_compare)
+		runCompare();
+}
+function runFilter() {
+	const C_FILTER_ERA		= 0;
+	const C_FILTER_NEWOLD	= 1;
+	const C_FILTER_TYPE		= 2;
+	const C_FILTER_SLOTS	= 3;
+
+	const C_FILTER_NEWOLD_NEW		= 0;
+	const C_FILTER_NEWOLD_OLD		= 1;
+	
+	const C_FILTER_TYPE_STANDARD	= 0;
+	const C_FILTER_TYPE_BONUS		= 1;
+	const C_FILTER_TYPE_CAREER		= 2;
+
+	const C_FILTER_SLOTS_ONE		= 0;
+	const C_FILTER_SLOTS_MORE		= 1;
+	
+	checkFilter();
+	
+	var abFilter=[[false,false,false,false,false,false,false],[false,false],[false,false],[false,false]];
+	var asFilter=['era','typeno','bonus','slots'];
+	for (var j=0;j<asFilter.length;j++){
+		var chkTest=cName(asFilter[j]);
+		bTest=false;
+		for (var i=0;i<chkTest.length;i++){
+			abFilter[j][i]=chkTest[i].checked;
+		}
+	}
+	
+	var sHTML='<table class="boxyRadio" id="enginesByFilter">';
+	sHTML +=  '	 <tr>';
+	sHTML +=  '	   <th><button type="button" onclick="addCompare(\'all\')" style="color:green">+</button></th>';
+	sHTML +=  '	   <th>'+STR_ERA()+'</th>';
+	sHTML +=  '	   <th>'+STR_NAME()+'</th>';
+//	sHTML +=  '	   <th>'+STR_TYPE()+'</th>';
+//	sHTML +=  '	   <th>'+STR_BONUS()+'</th>';
+	sHTML +=  '	   <th>'+STR_TRACTIVE_FORCE()+'</th>';
+	sHTML +=  '	   <th>'+STR_ACCELERATION()+'</th>';
+	sHTML +=  '	   <th>'+STR_SPEED()+'</th>';
+	sHTML +=  '	   <th>'+STR_RELIABILITY()+'</th>';
+	sHTML +=  '	   <th></th>';//more info
+	sHTML +=  '	 </tr>';
+	
+	for (var iEngineID=0;iEngineID<aaEngines.length;iEngineID++){
+		var Engine_Type = aaEngines[iEngineID][C_ENGINE_TYPE];
+		var add=false;
+		if 	((check(Engine_Type,T_CARGO) && Cargo) || (check(Engine_Type,T_PAX) && !Cargo))//BASIC TYPE
+		{ 
+			if (check(Engine_Type,T_CAREER))
+			{
+				if ((abFilter[C_FILTER_TYPE][C_FILTER_TYPE_CAREER]) &&					
+					(((aaEngines[iEngineID][C_ENGINE_ERA] == 0) && (abFilter[C_FILTER_ERA][4] || abFilter[C_FILTER_ERA][5] || abFilter[C_FILTER_ERA][6] || abFilter[C_FILTER_ERA][7])
+					) || 
+					((aaEngines[iEngineID][C_ENGINE_ERA] > 0) && abFilter[C_FILTER_ERA][aaEngines[iEngineID][C_ENGINE_ERA]-1]))
+					)add=true;
+			} else
+			{
+				if 	((abFilter[C_FILTER_ERA][aaEngines[iEngineID][C_ENGINE_ERA]-1]) && //Era >
+					(//Standart & Bonus
+						(check(Engine_Type,T_STANDARD) && abFilter[C_FILTER_TYPE][C_FILTER_TYPE_STANDARD]) || 
+						(check(Engine_Type,T_BONUS) && abFilter[C_FILTER_TYPE][C_FILTER_TYPE_BONUS])
+					) &&
+					(//NEW & OLD
+						(!check(Engine_Type,T_OLD) && abFilter[C_FILTER_NEWOLD][C_FILTER_NEWOLD_NEW]) || 
+						(check(Engine_Type,T_OLD) && abFilter[C_FILTER_NEWOLD][C_FILTER_NEWOLD_OLD])
+					) &&
+					(//Multy Slots OK
+						(aaEngines[iEngineID][C_ENGINE_SLOTS] <= 1) ||//1 slont
+						(
+							(abFilter[C_FILTER_SLOTS][C_FILTER_SLOTS_ONE] && (aaEngines[iEngineID][C_ENGINE_SLOTS_VIEW] <= 1)) ||//Multy 1 slot
+							(abFilter[C_FILTER_SLOTS][C_FILTER_SLOTS_MORE] && (aaEngines[iEngineID][C_ENGINE_SLOTS_VIEW] > 1))//Multy 2+ slot
+						)
+					)
+					)add=true;
+			}
+		}
+		if (add){			
+			sHTML += '	<tr>';
+			sHTML += '	  <td><button type="button" onclick="addCompare(' + iEngineID + ')" style="color:green">+</button>';
+			sHTML += '	  <td>' + aaEngines[iEngineID][C_ENGINE_ERA] + '</td>';
+			sHTML += '	  <td>' + EngineName(iEngineID,true) + '</td>';
+//			sHTML += '	  <td>' + (check(Engine_Type,T_CARGO)?STR_CARGO():STR_PASSENGER()) + '</td>';
+//			sHTML += '	  <td>' + (check(Engine_Type,T_BONUS)?STR_BONUS():'') + '</td>';
+			for (var k=C_ENGINE_TRACTIVE_FORCE;k<=C_ENGINE_RELIABILITY;k++){
+				sHTML += '	  <td>';
+				for (var j=0;j<aaEngines[iEngineID][k].length;j++){
+					var sId = EngineColumnStr(k) + iEngineID;
+					sHTML += '<input type="radio" name="' + sId + '" id="' + sId + '-' + j + '" value="' + j + '"' + (j==aaEngines[iEngineID][k].length-1?' checked':'') + '><label for="' + sId + '-' + j + '">' + EngineGetData(iEngineID,k,j) + '</label>';
+				}
+				sHTML += '</td>';
+			}
+			sHTML += '	  <td>' + EngineInfoStr(aaEngines[iEngineID][C_ENGINE_MORE_INFO]) + '</td>';
+			
+			sHTML +=  '	 </tr>';
+		}
+	}
+	sHTML +=  '</table>';
+	
+	cId('enginesByFilter').outerHTML=sHTML;
+}
+function runFilterCargo(run_compare=true) {
+	var add = !Cargo;
+	Cargo=true;
+	Pax_offset=0;	
+	cId('typec').checked=true;
+	cId('typep').checked=false;
+	ShowSchedule();
+	runFilter();
+	if (add){
+		addCompare('all',run_compare);
+		init_chart_types();		
+	}
+}
+
+function runFilterPax(run_compare=true) {
+	var add = Cargo;
+	Cargo=false;;
+	Pax_offset=C_CHART_PAX_INFO_OFFSET;
+	cId('typec').checked=false;
+	cId('typep').checked=true;
+	ShowSchedule();
+	runFilter();	
+	if (add){
+		addCompare('all',run_compare);
+		init_chart_types();
+	}
+}
+
+function tracksChangeMark(tracks){
+	var aoTracks=cName(tracks);
+	var bEnd=false;
+	for (var i=0;i<aoTracks.length;i++){
+		aoTracks[i].style.textAlign='center';
+//		aoTracks[i].style.color='black';
+		aoTracks[i].style.backgroundColor ='white';		
+		if (i==0) {
+			aoTracks[i].style.borderTopLeftRadius='10px';
+			aoTracks[i].style.borderBottomLeftRadius='10px';
+		} else
+		if (!bEnd) {
+			aoTracks[i].style.borderTopLeftRadius='1px';
+			aoTracks[i].style.borderBottomLeftRadius='1px';
+			aoTracks[i].style.borderTopRightRadius='1px';
+			aoTracks[i].style.borderBottomRightRadius='1px';			
+		}
+		if ((Number(aoTracks[i].value) > 0) && !bEnd) {
+			if (i+1 <= aoTracks.length) {
+				if (Number(aoTracks[i+1].value)>0) {
+					aoTracks[i].style.borderTopRightRadius='1px';
+					aoTracks[i].style.borderBottomRightRadius='1px';
+				} else {
+					aoTracks[i].style.borderTopRightRadius='10px';
+					aoTracks[i].style.borderBottomRightRadius='10px';
+				}
+			} else {
+				aoTracks[i].style.borderTopRightRadius='10px';
+				aoTracks[i].style.borderBottomRightRadius='10px';
+			}
+		} else {
+			bEnd=true;
+			aoTracks[i].style.borderRadius='';
+//			aoTracks[i].style.color='grey';
+//			aoTracks[i].style.backgroundColor ='#f1f1f1';		
+			aoTracks[i].style.backgroundColor ='silver';		
+			aoTracks[i].style.borderTopLeftRadius='10px';
+			aoTracks[i].style.borderBottomLeftRadius='10px';
+			aoTracks[i].style.borderTopRightRadius='10px';
+			aoTracks[i].style.borderBottomRightRadius='10px';			
+		}
+	}
+}
+	
+function tracksChange(tracks){
+	if (typeof tracks == 'string'){
+		tracksChangeMark(tracks);
+		runCompare();
+	}
+	if (tracks == null){
+		tracksChangeMark('tracks0');		
+		tracksChangeMark('tracks1');		
+		tracksChangeMark('tracks2');		
+		tracksChangeMark('tracksPax0');		
+		tracksChangeMark('tracksPax1');		
+		tracksChangeMark('tracksPax2');		
+	}
+}
+function waitTimeChange(wtChange,wtNoChange){
+	var oWaitTimeChange=cId(wtChange);
+	var oWaitTimeNoChange=cId(wtNoChange);
+	oWaitTimeNoChange.value=oWaitTimeChange.value;
+	runCompare();
+}
+function engineHealthChange(iWhich){
+	var oEngineHealthN=cId('engineHealthN');
+	var oEngineHealth=cId('engineHealth');
+	if (iWhich == 0) {
+		oEngineHealth.value=oEngineHealthN.value;
+	} else {
+		oEngineHealthN.value=oEngineHealth.value;
+	}
+	runCompare();
+}
+function revenueChange(iWhich){
+	var oRevenueN=cId('revenueN');
+	var oRevenue=cId('revenue');
+	if (iWhich == 0) {
+		oRevenue.value=oRevenueN.value;
+	} else {
+		oRevenueN.value=oRevenue.value;
+	}
+	runCompare();
+}
+function change2D3D(iWhich){
+	var o3DWaitTime=cId('3DWaitTime');
+	var o3DEngineHealth=cId('3DEngineHealth');
+	var oChart=cId('chart');
+	var oChart3D=cId('chart3D');
+	
+	if (iWhich == 0) { //2D
+		o3DWaitTime.style.visibility='hidden';
+		o3DEngineHealth.style.visibility='hidden';
+		oChart.style.display='block';
+		oChart3D.style.display='none';
+	} else { //3D
+		o3DWaitTime.style.visibility='visible';
+		o3DEngineHealth.style.visibility='visible';
+		oChart.style.display='none';
+		oChart3D.style.display='block';
+	}
+	runCompare();
+}
+function selection3D(iWhich){
+	var o3DSelectWaitTime=cId('3DSelectWaitTime');
+	var o3DSelectEngineHealth=cId('3DSelectEngineHealth');
+	if (!o3DSelectWaitTime.checked && !o3DSelectEngineHealth.checked){
+		if (iWhich==0) {
+			o3DSelectEngineHealth.checked=true;
+		} else {
+			o3DSelectWaitTime.checked=true;
+		}
+	}
+	runCompare();
+}	    
+</script>
+	</head>
+<body>
+
+<noscript>
+	<fieldset class="boxyCheckbox">
+		<legend>Rail Nation engine compare by GizmoXomziG & Hear Me Roar</legend>
+		<dev class="chart_text" style="color:red">Please enable Javascript on your browser.</div>
+	</fieldset>
+</noscript>	
+
+</body>
+</html>
